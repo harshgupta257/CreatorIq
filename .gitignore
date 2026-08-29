@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.so
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# Env files (keep .env.example if exists)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V8
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Next.js
+creatorlab-frontend/.next/
+creatorlab-frontend/out/
+creatorlab-frontend/node_modules/
+creatorlab-frontend/.env.local
+creatorlab-frontend/bun.lock
+
+# Misc
+*.zip
+*.pdf
+*.tex
+cover_letter.html
+smart-resume-analyzer/
+smart-resume-analyzer.zip
+harsh_res.pdf
+HARSH_RESUME.pdf
+new_res.pdf
+fix_templates.py
