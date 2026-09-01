@@ -53,7 +53,7 @@ creatorlab-frontend/.next/
 creatorlab-frontend/out/
 creatorlab-frontend/node_modules/
 creatorlab-frontend/.env.local
-creatorlab-frontend/bun.lock
+
 
 # Misc
 *.zip
