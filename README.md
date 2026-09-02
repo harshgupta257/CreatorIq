@@ -19,9 +19,11 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16.3-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.x-000000?style=for-the-badge&logo=flask)](https://flask.palletsprojects.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python)](https://python.org/)
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python)](https://python.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06B6D4?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Vercel-black?style=for-the-badge&logo=vercel)](https://creator-iq-gules.vercel.app/)
+[![Backend](https://img.shields.io/badge/Backend-Render-46E3B7?style=for-the-badge&logo=render)](https://creatoriq-backend-986h.onrender.com/api/health)
 
 <br/>
 
@@ -29,7 +31,9 @@
 
 <br/>
 
-[**Live Demo**](#) · [**Report Bug**](https://github.com/harshgupta257/CreatorIq/issues) · [**Request Feature**](https://github.com/harshgupta257/CreatorIq/issues) · [**Documentation**](#-documentation)
+[**🚀 Live Demo**](https://creator-iq-gules.vercel.app/) · [**⚙️ API Health**](https://creatoriq-backend-986h.onrender.com/api/health) · [**🐛 Report Bug**](https://github.com/harshgupta257/CreatorIq/issues) · [**💡 Request Feature**](https://github.com/harshgupta257/CreatorIq/issues)
+
+
 
 </div>
 
@@ -208,9 +212,15 @@ CreatorIQ
 
 | Requirement | Version |
 |---|---|
-| Python | 3.10+ |
+| Python | 3.11 |
 | Bun | 1.3+ (or Node.js 18+) |
 | Git | Any |
+
+> **Already deployed?** Use the live versions directly:
+> - 🌐 **Frontend:** [creator-iq-gules.vercel.app](https://creator-iq-gules.vercel.app/)
+> - ⚙️ **Backend API:** [creatoriq-backend-986h.onrender.com](https://creatoriq-backend-986h.onrender.com/api/health)
+>
+> *(Note: Render free tier spins down after inactivity — first request may take ~30s to wake up)*
 
 You'll also need API keys (free tiers work fine):
 
