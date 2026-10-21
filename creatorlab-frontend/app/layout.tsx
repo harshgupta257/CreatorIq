@@ -5,7 +5,7 @@ import './globals.css';
 
 const title = 'CreatorIQ — Creator Intelligence Platform';
 const description =
-  'Neon-grade analytics for content creators. ML growth predictions, audience sentiment, competitor intelligence and Google Trends in one retro-futuristic command deck.';
+  'Free, open-source analytics for YouTube creators: ML growth predictions, multi-source audience sentiment, competitor intelligence and Google Trends in one dashboard.';
 
 export const metadata: Metadata = {
   title,

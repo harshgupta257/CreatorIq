@@ -15,8 +15,8 @@ export default function TermsPage() {
       sections={[
         { heading: 'Using the service', body: 'CreatorIQ provides analytics on public creator data for informational purposes. You agree not to use the service to harass creators or to violate any platform terms of service.' },
         { heading: 'Forecasts', body: 'Growth predictions are statistical estimates based on historical data. They are not guarantees of future performance.' },
-        { heading: 'Availability', body: 'We aim for continuous uptime but may change, suspend or discontinue features at any time. Paid plans can be cancelled at any time.' },
-        { heading: 'Contact', body: 'For questions about these terms, email hello@creatoriq.app.' },
+        { heading: 'Availability', body: 'CreatorIQ is a free project hosted on free-tier infrastructure (Vercel and Render). The backend may take around 30 seconds to wake up after inactivity, and features may change or be discontinued at any time.' },
+        { heading: 'Contact', body: 'For questions about these terms, open an issue at github.com/harshgupta257/CreatorIq/issues.' },
       ]}
     />
   );

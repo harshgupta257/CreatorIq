@@ -6,27 +6,30 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useCreatorStore } from '@/lib/store';
 import {
-  ArrowRight, Menu, X, Zap, Check, Terminal, Play, Star, Quote,
-  BrainCircuit, MessageSquareText, Crosshair, Mail, Shield, Activity,
+  ArrowRight, Menu, X, Zap, Check, Terminal, Play,
+  BrainCircuit, MessageSquareText, Crosshair, Activity, TrendingUp, Users,
 } from 'lucide-react';
 
 /* ───────────────────────── Content ───────────────────────── */
 
 const NAV_LINKS = [
   { label: 'Features', href: '#features' },
-  { label: 'Signals', href: '#testimonials' },
-  { label: 'Pricing', href: '#pricing' },
+  { label: 'Compare', href: '#compare' },
+  { label: 'Get Started', href: '#pricing' },
   { label: 'Launch', href: '#cta' },
 ];
 
-const SOURCES = ['YOUTUBE DATA API', 'REDDIT', 'GOOGLE TRENDS', 'NEWS FEEDS', 'INSTAGRAM GRAPH', 'VADER NLP', 'PROPHET ML', 'COMPETITOR SCAN'];
+const SOURCES = ['YOUTUBE DATA API V3', 'REDDIT · PRAW', 'GOOGLE TRENDS', 'NEWS RSS', 'VADER + TEXTBLOB', 'RANDOM FOREST', 'GRADIENT BOOSTING', 'INSTAGRAM · SOON'];
+
+const REPO_URL = 'https://github.com/harshgupta257/CreatorIq';
+const ISSUES_URL = `${REPO_URL}/issues`;
 
 const FEATURES = [
   {
     icon: BrainCircuit,
     tag: 'MODULE_01',
     title: 'Growth Forecasting',
-    desc: 'Machine-learning models trained on your upload history project views and subscribers 12 weeks into the future — with confidence bands, not guesses.',
+    desc: 'Random Forest and Gradient Boosting models trained on your upload history forecast weekly views 12 weeks ahead, with a viral-potential score and your best upload slot.',
     stat: '12 WK',
     statLabel: 'forecast horizon',
     color: 'cyan' as const,
@@ -35,72 +38,75 @@ const FEATURES = [
     icon: MessageSquareText,
     tag: 'MODULE_02',
     title: 'Sentiment Radar',
-    desc: 'Every YouTube comment and Reddit thread about you, scored for mood and toxicity. Know how your audience feels before the numbers move.',
-    stat: '10K+',
-    statLabel: 'comments / scan',
+    desc: 'YouTube comments, Reddit threads and news coverage scored with VADER and TextBlob, side by side, with your top positive and critical comments pulled out.',
+    stat: '3',
+    statLabel: 'sources compared',
     color: 'pink' as const,
   },
   {
     icon: Crosshair,
     tag: 'MODULE_03',
     title: 'Competitor Lock-On',
-    desc: 'Put up to three rival channels side by side. Compare upload cadence and engagement, and spot the topic gaps they leave open for you.',
+    desc: 'Add up to three rival channels. Get A+ to F health grades, a head-to-head metrics table and a list of topics they cover that you don\'t.',
     stat: '3X',
     statLabel: 'channels compared',
     color: 'blue' as const,
   },
 ];
 
-const TESTIMONIALS = [
+const COMPARISONS = [
   {
-    quote: 'The forecast told me my Shorts pivot would plateau in week 6. It did — to the day. I re-planned and hit 100K two months early.',
-    name: 'Maya Okafor',
-    role: 'Tech reviewer · 412K subs',
-    initials: 'MO',
+    icon: TrendingUp,
+    title: 'Growth',
+    studio: ['Total views & watch time', 'Upload history'],
+    creatoriq: ['12-week ML growth forecast', 'Best upload day & hour heatmap'],
     color: 'cyan' as const,
   },
   {
-    quote: 'Sentiment Radar caught a brewing Reddit backlash before it reached my comments. That one alert saved a sponsorship.',
-    name: 'Diego Ramírez',
-    role: 'Gaming creator · 1.2M subs',
-    initials: 'DR',
+    icon: MessageSquareText,
+    title: 'Audience',
+    studio: ['Simple engagement rate', 'Comments, one by one'],
+    creatoriq: ['Sentiment across YouTube, Reddit & news', 'Top positive & critical comments'],
     color: 'pink' as const,
   },
   {
-    quote: 'We manage nine channels. Competitor Lock-On replaced three spreadsheets and a weekly two-hour meeting. Pure signal.',
-    name: 'Priya Nair',
-    role: 'Head of Growth · Neon Pixel Media',
-    initials: 'PN',
+    icon: Users,
+    title: 'Market',
+    studio: ['Nothing about competitors', 'No outside signal'],
+    creatoriq: ['Health grades & content gaps vs 3 rivals', 'Google Trends topic demand'],
     color: 'blue' as const,
   },
 ];
 
 const PLANS = [
   {
-    name: 'Rookie',
+    name: 'Self-Host',
     price: '0',
-    period: 'forever',
-    desc: 'For new creators running their first scans.',
-    features: ['1 channel tracked', 'Overview + YouTube analytics', 'Weekly sentiment snapshot', 'Google Trends lookup', 'Community support'],
-    cta: 'Start Free',
+    period: 'MIT licensed',
+    desc: 'Run your own copy with your own API keys.',
+    features: ['Full source on GitHub', 'Flask API + Next.js frontend', 'Bring your own YouTube API key', 'Reddit & News keys optional', 'Run locally or deploy anywhere'],
+    cta: 'View Source',
+    href: REPO_URL,
     highlight: false,
   },
   {
-    name: 'Synth Pro',
-    price: '19',
-    period: '/ month',
-    desc: 'The full command deck for growing channels.',
-    features: ['5 channels tracked', '12-week ML growth forecasts', 'Real-time sentiment radar', 'Competitor Lock-On (3 rivals)', 'Content-gap reports', 'Priority email support'],
-    cta: 'Go Pro',
+    name: 'Live App',
+    price: '0',
+    period: 'no signup',
+    desc: 'The hosted app. Paste a handle and go.',
+    features: ['Every dashboard module', 'Random Forest growth forecasts', 'Multi-source sentiment', 'Competitor intel for 3 channels', 'Google Trends lookup', 'First load may take ~30s (free-tier server waking up)'],
+    cta: 'Launch App',
+    href: '/dashboard',
     highlight: true,
   },
   {
-    name: 'Mainframe',
-    price: '79',
-    period: '/ month',
-    desc: 'For agencies and multi-channel networks.',
-    features: ['Unlimited channels', 'Team seats + roles', 'API access & CSV export', 'Custom alert webhooks', 'Dedicated success engineer'],
-    cta: 'Contact Sales',
+    name: 'Contribute',
+    price: '0',
+    period: 'open source',
+    desc: 'Help build what comes next.',
+    features: ['Report bugs on GitHub Issues', 'Request features', 'Roadmap: Instagram Graph API', 'Roadmap: TikTok analytics', 'Roadmap: weekly email digests'],
+    cta: 'Open an Issue',
+    href: ISSUES_URL,
     highlight: false,
   },
 ];
@@ -116,21 +122,21 @@ const FOOTER_COLUMNS = [
     ],
   },
   {
-    title: 'Resources',
+    title: 'Open Source',
     links: [
-      { label: 'YouTube Analytics Guide', href: '#features' },
-      { label: 'Creator Growth Tools', href: '#features' },
-      { label: 'Audience Sentiment 101', href: '#features' },
-      { label: 'Pricing', href: '#pricing' },
+      { label: 'GitHub Repository', href: REPO_URL },
+      { label: 'Report a Bug', href: ISSUES_URL },
+      { label: 'Request a Feature', href: ISSUES_URL },
+      { label: 'API Health', href: 'https://creatoriq-backend-986h.onrender.com/api/health' },
     ],
   },
   {
-    title: 'Company',
+    title: 'Project',
     links: [
-      { label: 'Contact', href: 'mailto:hello@creatoriq.app' },
+      { label: 'Contact', href: ISSUES_URL },
       { label: 'Privacy Policy', href: '/privacy' },
       { label: 'Terms of Use', href: '/terms' },
-      { label: 'Status', href: '/dashboard/settings' },
+      { label: 'Built by harshgupta257', href: 'https://github.com/harshgupta257' },
     ],
   },
 ];
@@ -139,44 +145,14 @@ const FOOTER_COLUMNS = [
 
 type IconProps = { className?: string };
 
-const YoutubeIcon = ({ className }: IconProps) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-    <path d="M2.5 17a24.1 24.1 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.6 49.6 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.1 24.1 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.6 49.6 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
-    <path d="m10 15 5-3-5-3z" />
-  </svg>
-);
-const XIcon = ({ className }: IconProps) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-    <path d="M4 4l16 16M20 4 4 20" />
-  </svg>
-);
 const GithubIcon = ({ className }: IconProps) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
     <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
     <path d="M9 18c-4.51 2-5-2-7-2" />
   </svg>
 );
-const InstagramIcon = ({ className }: IconProps) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-  </svg>
-);
-const LinkedinIcon = ({ className }: IconProps) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
-    <rect width="4" height="12" x="2" y="9" />
-    <circle cx="4" cy="4" r="2" />
-  </svg>
-);
-
 const SOCIALS = [
-  { label: 'YouTube', href: 'https://youtube.com', Icon: YoutubeIcon },
-  { label: 'X (Twitter)', href: 'https://x.com', Icon: XIcon },
-  { label: 'Instagram', href: 'https://instagram.com', Icon: InstagramIcon },
-  { label: 'GitHub', href: 'https://github.com/harshgupta257/CreatorIq', Icon: GithubIcon },
-  { label: 'LinkedIn', href: 'https://linkedin.com', Icon: LinkedinIcon },
+  { label: 'CreatorIQ on GitHub', href: REPO_URL, Icon: GithubIcon },
 ];
 
 /* ───────────────────────── Helpers ───────────────────────── */
@@ -296,9 +272,9 @@ export default function LandingPage() {
           </ul>
 
           <div className="hidden md:flex items-center gap-4">
-            <Link href="/dashboard" className="text-xs uppercase tracking-[0.2em] text-[#c0c0c0] hover:text-white transition-all duration-300 cursor-pointer">
-              Log in
-            </Link>
+            <a href={REPO_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#c0c0c0] hover:text-white transition-all duration-300 cursor-pointer">
+              <GithubIcon className="w-4 h-4" /> Source
+            </a>
             <button onClick={() => router.push('/dashboard')} className="btn-neon btn-neon-pink h-11 px-6 text-[11px]">
               Launch App <ArrowRight className="w-4 h-4" />
             </button>
@@ -354,7 +330,7 @@ export default function LandingPage() {
                 className="inline-flex items-center gap-2 border border-[#00ffff]/40 bg-[#00ffff]/5 px-3 py-1.5 mb-8 text-[10px] sm:text-[11px] uppercase tracking-[0.3em] text-[#00ffff]"
               >
                 <span className="w-1.5 h-1.5 bg-[#00ff9f] shadow-[0_0_6px_#00ff9f] animate-pulse-dot" />
-                System online · v2.6 · ML core loaded
+                Open source · MIT · Live on Vercel
               </motion.div>
 
               <motion.h1
@@ -400,9 +376,9 @@ export default function LandingPage() {
 
               <div className="mt-10 grid grid-cols-3 gap-4 max-w-md mx-auto lg:mx-0">
                 {[
-                  { v: '50K+', l: 'Channels scanned', c: 'neon-cyan' },
-                  { v: '6', l: 'Data sources', c: 'neon-pink' },
-                  { v: '94%', l: 'Forecast accuracy', c: 'neon-gold' },
+                  { v: '$0', l: 'Free & open source', c: 'neon-cyan' },
+                  { v: '4', l: 'Live data sources', c: 'neon-pink' },
+                  { v: '12WK', l: 'Forecast horizon', c: 'neon-gold' },
                 ].map((s) => (
                   <div key={s.l} className="border-l-2 border-[#5d34d0] pl-3 text-left">
                     <div className={`font-display text-2xl md:text-3xl ${s.c}`}>{s.v}</div>
@@ -434,14 +410,14 @@ export default function LandingPage() {
 
               {/* Floating HUD cards */}
               <div className="absolute top-4 left-0 sm:left-2 neon-card neon-card-corners px-4 py-3 animate-float [animation-delay:-2s]">
-                <div className="text-[9px] uppercase tracking-[0.25em] text-[#6a6aa8]">Proj. views · 12wk</div>
+                <div className="text-[9px] uppercase tracking-[0.25em] text-[#6a6aa8]">Sample · proj. views</div>
                 <div className="font-display text-xl neon-cyan mt-1">+218%</div>
                 <svg viewBox="0 0 100 28" className="w-28 h-7 mt-1">
                   <polyline points="0,24 14,20 28,22 42,14 56,16 70,8 84,10 100,2" fill="none" stroke="#00ffff" strokeWidth="2" style={{ filter: 'drop-shadow(0 0 3px #00ffff)' }} />
                 </svg>
               </div>
               <div className="absolute bottom-10 right-0 sm:right-2 neon-card px-4 py-3 border-[#ff006e]/40 animate-float [animation-delay:-4s]">
-                <div className="text-[9px] uppercase tracking-[0.25em] text-[#6a6aa8]">Audience mood</div>
+                <div className="text-[9px] uppercase tracking-[0.25em] text-[#6a6aa8]">Sample · mood</div>
                 <div className="flex items-end gap-1 h-8 mt-2">
                   {[40, 65, 50, 85, 70, 95].map((h, i) => (
                     <span key={i} className="w-2.5 bg-[#ff006e] shadow-[0_0_6px_#ff006e]" style={{ height: `${h}%` }} />
@@ -506,43 +482,45 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ═════════ TESTIMONIALS ═════════ */}
-        <section id="testimonials" className="relative py-24 md:py-32 px-5 md:px-8 bg-[#05050c] scroll-mt-20" aria-label="Testimonials">
+        {/* ═════════ COMPARE ═════════ */}
+        <section id="compare" className="relative py-24 md:py-32 px-5 md:px-8 bg-[#05050c] scroll-mt-20" aria-label="CreatorIQ compared with YouTube Studio">
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#00ffff] to-transparent opacity-60" />
           <div className="max-w-7xl mx-auto">
             <SectionTitle
-              kicker="Incoming transmissions"
-              title="Creators tuned in"
-              sub="What creators say after their first month with the data."
+              kicker="Signal vs noise"
+              title="Beyond YouTube Studio"
+              sub="Studio shows you views. CreatorIQ shows you why they move, and where they're heading."
             />
 
             <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-              {TESTIMONIALS.map((t, i) => {
-                const a = ACCENTS[t.color];
+              {COMPARISONS.map((c, i) => {
+                const a = ACCENTS[c.color];
                 return (
-                  <Reveal key={t.name} delay={i * 0.12}>
-                    <figure className="neon-card h-full p-7 md:p-8 flex flex-col">
-                      <div className="flex items-center justify-between mb-6">
-                        <Quote className="w-8 h-8" style={{ color: a.hex, filter: `drop-shadow(0 0 6px ${a.hex})` }} />
-                        <div className="flex gap-1" aria-label="5 out of 5 stars">
-                          {Array.from({ length: 5 }).map((_, s) => (
-                            <Star key={s} className="w-3.5 h-3.5 fill-[#ffd700] text-[#ffd700]" />
-                          ))}
-                        </div>
+                  <Reveal key={c.title} delay={i * 0.12}>
+                    <article className="neon-card h-full p-7 md:p-8 flex flex-col">
+                      <div className="flex items-center gap-4 mb-7">
+                        <span className={`w-12 h-12 grid place-items-center border-2 ${a.border} ${a.glow}`}>
+                          <c.icon className="w-5 h-5" style={{ color: a.hex }} />
+                        </span>
+                        <h3 className="font-display text-xl uppercase text-white">{c.title}</h3>
                       </div>
-                      <blockquote className="text-sm md:text-[15px] text-[#e6f7ff] leading-relaxed flex-1">
-                        &ldquo;{t.quote}&rdquo;
-                      </blockquote>
-                      <figcaption className="mt-8 flex items-center gap-4">
-                        <span className={`w-12 h-12 grid place-items-center border-2 ${a.border} ${a.glow} font-display text-sm`} style={{ color: a.hex }}>
-                          {t.initials}
-                        </span>
-                        <span>
-                          <span className="block text-sm font-semibold text-white">{t.name}</span>
-                          <span className="block text-[11px] text-[#6a6aa8] tracking-wide">{t.role}</span>
-                        </span>
-                      </figcaption>
-                    </figure>
+                      <div className="text-[10px] uppercase tracking-[0.3em] text-[#6a6aa8] mb-3">YouTube Studio</div>
+                      <ul className="flex flex-col gap-2.5 mb-7">
+                        {c.studio.map((item) => (
+                          <li key={item} className="flex items-start gap-3 text-sm text-[#6a6aa8]">
+                            <X className="w-4 h-4 mt-0.5 shrink-0" /> {item}
+                          </li>
+                        ))}
+                      </ul>
+                      <div className={`text-[10px] uppercase tracking-[0.3em] mb-3 ${a.text}`}>CreatorIQ</div>
+                      <ul className="flex flex-col gap-2.5">
+                        {c.creatoriq.map((item) => (
+                          <li key={item} className="flex items-start gap-3 text-sm text-[#e6f7ff]">
+                            <Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: a.hex }} /> {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </article>
                   </Reveal>
                 );
               })}
@@ -555,9 +533,9 @@ export default function LandingPage() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(93,52,208,0.35)_0%,transparent_60%)] pointer-events-none" />
           <div className="relative max-w-6xl mx-auto">
             <SectionTitle
-              kicker="Select your tier"
-              title="Pick your power level"
-              sub="Start free and upgrade when you need more. Cancel anytime."
+              kicker="Select your mode"
+              title="Free. Open. Yours."
+              sub="CreatorIQ is open source. Use the hosted app, or run your own copy."
             />
 
             <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
@@ -572,7 +550,7 @@ export default function LandingPage() {
                   >
                     {p.highlight && (
                       <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#ff006e] text-white text-[10px] tracking-[0.3em] uppercase px-4 py-1.5 shadow-[0_0_16px_#ff006e] flex items-center gap-1.5 whitespace-nowrap">
-                        <Zap className="w-3 h-3" /> Most popular
+                        <Zap className="w-3 h-3" /> Start here
                       </div>
                     )}
                     <div className={`text-xs tracking-[0.3em] uppercase mb-3 ${p.highlight ? 'neon-pink' : 'text-[#00ffff]'}`}>{p.name}</div>
@@ -589,12 +567,13 @@ export default function LandingPage() {
                         </li>
                       ))}
                     </ul>
-                    <button
-                      onClick={() => (p.name === 'Mainframe' ? (window.location.href = 'mailto:hello@creatoriq.app') : router.push('/dashboard'))}
+                    <a
+                      href={p.href}
+                      {...(p.href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                       className={`btn-neon h-12 px-6 text-[11px] w-full ${p.highlight ? 'btn-neon-pink' : 'btn-neon-ghost'}`}
                     >
                       {p.cta} <ArrowRight className="w-4 h-4" />
-                    </button>
+                    </a>
                   </div>
                 </Reveal>
               ))}
@@ -621,7 +600,7 @@ export default function LandingPage() {
                   <span className="neon-cyan">starts now</span>
                 </h2>
                 <p className="text-sm md:text-base text-[#9aa4d6] max-w-xl mx-auto mb-10">
-                  Enter any YouTube handle and get your first full analysis in under 30 seconds. No account, no credit card.
+                  Enter any YouTube handle to run a full analysis. No account, no API key, no credit card.
                 </p>
                 <div className="max-w-2xl mx-auto flex flex-col sm:flex-row gap-4">
                   {channelInput('cta-channel')}
@@ -630,8 +609,8 @@ export default function LandingPage() {
                   </button>
                 </div>
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[11px] uppercase tracking-widest text-[#6a6aa8]">
-                  <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-[#00ff9f]" /> Read-only access</span>
-                  <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#00ff9f]" /> Free forever tier</span>
+                  <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#00ff9f]" /> No signup</span>
+                  <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#00ff9f]" /> Open source · MIT</span>
                 </div>
               </div>
             </div>
@@ -647,13 +626,15 @@ export default function LandingPage() {
             <div>
               <Logo />
               <p className="mt-5 text-sm text-[#9aa4d6] leading-relaxed max-w-xs">
-                Analytics, sentiment and forecasts for YouTube creators, built on ML.
+                Free, open-source analytics, sentiment and ML forecasts for YouTube creators.
               </p>
               <a
-                href="mailto:hello@creatoriq.app"
+                href={ISSUES_URL}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="mt-6 inline-flex items-center gap-2 text-sm text-[#00ffff] hover:[text-shadow:0_0_8px_#00ffff] transition-all duration-300 cursor-pointer"
               >
-                <Mail className="w-4 h-4" /> hello@creatoriq.app
+                <GithubIcon className="w-4 h-4" /> Questions? Open an issue
               </a>
               <div className="mt-7 flex gap-3">
                 {SOCIALS.map(({ label, href, Icon }) => (
@@ -695,12 +676,17 @@ export default function LandingPage() {
             <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
               <a href="/privacy" className="hover:text-[#00ffff] transition-all duration-300 cursor-pointer">Privacy Policy</a>
               <a href="/terms" className="hover:text-[#00ffff] transition-all duration-300 cursor-pointer">Terms of Use</a>
-              <a href="mailto:hello@creatoriq.app" className="hover:text-[#00ffff] transition-all duration-300 cursor-pointer">Contact</a>
+              <a href={ISSUES_URL} target="_blank" rel="noopener noreferrer" className="hover:text-[#00ffff] transition-all duration-300 cursor-pointer">Contact</a>
               <a href="/sitemap.xml" className="hover:text-[#00ffff] transition-all duration-300 cursor-pointer">Sitemap</a>
             </div>
-            <span className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-[#00ff9f] shadow-[0_0_6px_#00ff9f]" /> All systems nominal
-            </span>
+            <a
+              href="https://creatoriq-backend-986h.onrender.com/api/health"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 hover:text-[#00ffff] transition-all duration-300 cursor-pointer"
+            >
+              <span className="w-1.5 h-1.5 bg-[#00ff9f] shadow-[0_0_6px_#00ff9f]" /> API status
+            </a>
           </div>
         </div>
       </footer>

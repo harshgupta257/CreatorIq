@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="200" viewBox="0 0 1200 200" role="img" aria-label="Thanks for scrolling — drop a star">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#2a0a3a"/>
+    </linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0080ff"/>
+      <stop offset="0.5" stop-color="#ff006e"/>
+      <stop offset="1" stop-color="#00ffff"/>
+      <animateTransform attributeName="gradientTransform" type="translate" values="-1 0;1 0" dur="4s" repeatCount="indefinite"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-50%" width="140%" height="200%">
+      <feGaussianBlur stdDeviation="3.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <style>
+      .mono { font-family: 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', 'Courier New', monospace; }
+      .beat { animation: beat 1.4s ease-in-out infinite; transform-origin: 600px 120px; transform-box: view-box; }
+      @keyframes beat { 0%,100% { transform: scale(1); } 15% { transform: scale(1.18); } 30% { transform: scale(1); } 45% { transform: scale(1.12); } }
+    </style>
+  </defs>
+  <rect width="1200" height="200" fill="url(#bg)"/>
+  <rect x="0" y="18" width="1200" height="3" fill="url(#line)" filter="url(#glow)"/>
+  <g class="beat">
+    <path d="M600 140 L572 112 A17 17 0 0 1 600 88 A17 17 0 0 1 628 112 Z" fill="#ff006e" filter="url(#glow)"/>
+  </g>
+  <text x="600" y="62" text-anchor="middle" class="mono" font-size="22" font-weight="700" fill="#e6f7ff" letter-spacing="6">END OF FEED</text>
+  <text x="600" y="178" text-anchor="middle" class="mono" font-size="15" fill="#00ffff" letter-spacing="3" filter="url(#glow)">LIKE IT? DROP A ★ ON THE REPO</text>
+</svg>
