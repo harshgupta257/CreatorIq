@@ -9,12 +9,12 @@ interface BadgeProps {
 }
 
 const variants: Record<BadgeVariant, string> = {
-  default:  'bg-[#16161a] text-[#888892] border border-[#222228]',
-  accent:   'bg-[rgba(91,108,249,0.1)] text-[#5b6cf9] border border-[rgba(91,108,249,0.2)]',
-  positive: 'bg-[rgba(63,185,80,0.1)] text-[#3fb950] border border-[rgba(63,185,80,0.2)]',
-  warning:  'bg-[rgba(210,153,34,0.1)] text-[#d29922] border border-[rgba(210,153,34,0.2)]',
-  negative: 'bg-[rgba(248,81,73,0.1)] text-[#f85149] border border-[rgba(248,81,73,0.2)]',
-  outline:  'bg-transparent text-[#50505a] border border-[#222228]',
+  default:  'bg-[#1a1a2e] text-[#9aa4d6] border border-[#2a2a5a]',
+  accent:   'bg-[rgba(255,0,110,0.1)] text-[#ff006e] border border-[rgba(255,0,110,0.2)]',
+  positive: 'bg-[rgba(0,255,159,0.1)] text-[#00ff9f] border border-[rgba(0,255,159,0.2)]',
+  warning:  'bg-[rgba(255,215,0,0.1)] text-[#ffd700] border border-[rgba(255,215,0,0.2)]',
+  negative: 'bg-[rgba(255,56,100,0.1)] text-[#ff3864] border border-[rgba(255,56,100,0.2)]',
+  outline:  'bg-transparent text-[#6a6aa8] border border-[#2a2a5a]',
 };
 
 export function Badge({ children, variant = 'default', className }: BadgeProps) {

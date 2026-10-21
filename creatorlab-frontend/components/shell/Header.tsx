@@ -61,16 +61,16 @@ export function Header() {
   }
 
   return (
-    <header className="h-12 shrink-0 flex items-center gap-4 px-5 bg-[#0c0c0e] border-b border-[#222228]">
+    <header className="h-12 shrink-0 flex items-center gap-4 px-5 bg-black/80 backdrop-blur-sm border-b border-[#00ffff]/30 shadow-[0_4px_20px_rgba(0,255,255,0.08)]">
       {/* Page title */}
-      <span className="text-[13px] font-medium text-[#ededf0] min-w-[160px] shrink-0">
+      <span className="font-display text-[14px] uppercase tracking-wider neon-cyan min-w-[160px] shrink-0">
         {title}
       </span>
 
       {/* Search + channel pill */}
       <div className="flex-1 flex items-center justify-center gap-2">
         {store.channel && (
-          <span className="text-[11px] text-[#888892] bg-[#111114] border border-[#222228] px-2 py-1 rounded-[4px] max-w-[180px] truncate shrink-0">
+          <span className="text-[11px] text-[#9aa4d6] bg-[#0f0f24] border border-[#2a2a5a] px-2 py-1 rounded-[4px] max-w-[180px] truncate shrink-0">
             {store.channel.title}
           </span>
         )}
@@ -80,23 +80,23 @@ export function Header() {
           value={localInput}
           onChange={(e) => setLocalInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-[280px] h-8 bg-[#111114] border border-[#222228] rounded-[5px] text-[13px] text-[#ededf0] placeholder:text-[#50505a] px-3 outline-none focus:border-[#5b6cf9] transition-colors duration-100"
+          className="w-[280px] h-8 bg-[#0f0f24] border border-[#2a2a5a] rounded-[5px] text-[13px] text-[#e6f7ff] placeholder:text-[#6a6aa8] px-3 outline-none focus:border-[#00ffff] focus:shadow-[0_0_12px_rgba(0,255,255,0.4)] transition-all duration-200"
         />
       </div>
 
       {/* Right controls */}
       <div className="flex items-center gap-3 ml-auto">
         {/* Date range */}
-        <div className="flex bg-[#111114] border border-[#222228] rounded-[4px] overflow-hidden">
+        <div className="flex bg-[#0f0f24] border border-[#2a2a5a] rounded-[4px] overflow-hidden">
           {DATE_RANGES.map((r) => (
             <button
               key={r}
               onClick={() => store.setDateRange(r)}
               className={[
-                'h-7 px-2.5 text-[11px] font-medium transition-colors duration-100 border-r border-[#222228] last:border-r-0',
+                'h-7 px-2.5 text-[11px] font-medium transition-colors duration-100 border-r border-[#2a2a5a] last:border-r-0',
                 store.dateRange === r
-                  ? 'bg-[#5b6cf9] text-white'
-                  : 'text-[#888892] hover:text-[#ededf0] hover:bg-[#16161a]',
+                  ? 'bg-[#ff006e] text-white shadow-[0_0_10px_#ff006e]'
+                  : 'text-[#9aa4d6] hover:text-[#e6f7ff] hover:bg-[#1a1a2e]',
               ].join(' ')}
             >
               {r}
@@ -108,7 +108,7 @@ export function Header() {
         <button
           onClick={handleAnalyze}
           disabled={store.isAnalyzing}
-          className="h-8 px-4 bg-[#5b6cf9] text-white text-[12px] font-medium rounded-[5px] hover:bg-[#4a5be8] disabled:opacity-50 transition-colors duration-100 flex items-center justify-center min-w-[80px]"
+          className="h-8 px-4 bg-[#ff006e] text-white text-[12px] font-medium rounded-[5px] hover:bg-[#ff10f0] hover:shadow-[0_0_16px_#ff006e] shadow-[0_0_10px_rgba(255,0,110,0.6)] uppercase tracking-wider cursor-pointer disabled:opacity-50 transition-all duration-200 flex items-center justify-center min-w-[80px]"
         >
           {store.isAnalyzing
             ? <Loader2 className="w-3.5 h-3.5 animate-spin" />

@@ -144,47 +144,47 @@ export default function YouTubeAnalyticsPage() {
 
   if (!channel) {
     return (
-      <div className="flex-1 flex items-center justify-center min-h-[calc(100vh-64px)] text-[#888892] text-sm">
+      <div className="flex-1 flex items-center justify-center min-h-[calc(100vh-64px)] text-[#9aa4d6] text-sm">
         Analyze a channel to view YouTube analytics
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col w-full text-[#ededf0] min-h-screen bg-[#0c0c0e]">
+    <div className="flex flex-col w-full text-[#e6f7ff] min-h-screen bg-[#05050c]">
       
       {/* Section 1: Channel Overview Strip */}
-      <div className="w-full border-b border-[#222228] px-5 py-4 flex items-center justify-between bg-[#111114]">
+      <div className="w-full border-b border-[#2a2a5a] px-5 py-4 flex items-center justify-between bg-[#0f0f24]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[4px] bg-[#222228] overflow-hidden flex-shrink-0">
+          <div className="w-10 h-10 rounded-[4px] bg-[#2a2a5a] overflow-hidden flex-shrink-0">
             {channel.thumbnail ? (
               <img src={channel.thumbnail} alt={channel.title} className="w-full h-full object-cover" />
             ) : null}
           </div>
           <div className="flex flex-col">
             <span className="text-[16px] font-semibold leading-tight">{channel.title}</span>
-            <span className="text-[11px] text-[#50505a] mt-0.5">{channel.custom_url || channel.channel_id} {channel.country ? `• ${channel.country}` : ''}</span>
+            <span className="text-[11px] text-[#6a6aa8] mt-0.5">{channel.custom_url || channel.channel_id} {channel.country ? `• ${channel.country}` : ''}</span>
           </div>
         </div>
         
         <div className="flex items-center gap-6">
           <div className="flex flex-col items-end">
-            <span className="text-[11px] text-[#888892] uppercase tracking-wider">Subscribers</span>
+            <span className="text-[11px] text-[#9aa4d6] uppercase tracking-wider">Subscribers</span>
             <span className="text-[18px] font-medium leading-none mt-1 tabular-nums">{formatNum(channel.subscriber_count)}</span>
           </div>
-          <div className="w-[1px] h-8 bg-[#222228]" />
+          <div className="w-[1px] h-8 bg-[#2a2a5a]" />
           <div className="flex flex-col items-end">
-            <span className="text-[11px] text-[#888892] uppercase tracking-wider">Views</span>
+            <span className="text-[11px] text-[#9aa4d6] uppercase tracking-wider">Views</span>
             <span className="text-[14px] font-medium leading-none mt-1.5 tabular-nums">{formatNum(channel.view_count)}</span>
           </div>
-          <div className="w-[1px] h-8 bg-[#222228]" />
+          <div className="w-[1px] h-8 bg-[#2a2a5a]" />
           <div className="flex flex-col items-end">
-            <span className="text-[11px] text-[#888892] uppercase tracking-wider">Videos</span>
+            <span className="text-[11px] text-[#9aa4d6] uppercase tracking-wider">Videos</span>
             <span className="text-[14px] font-medium leading-none mt-1.5 tabular-nums">{formatNum(channel.video_count)}</span>
           </div>
-          <div className="w-[1px] h-8 bg-[#222228]" />
+          <div className="w-[1px] h-8 bg-[#2a2a5a]" />
           <div className="flex flex-col items-end">
-            <span className="text-[11px] text-[#888892] uppercase tracking-wider">Since</span>
+            <span className="text-[11px] text-[#9aa4d6] uppercase tracking-wider">Since</span>
             <span className="text-[14px] font-medium leading-none mt-1.5 tabular-nums">
               {channel.published_at ? new Date(channel.published_at).getFullYear() : '-'}
             </span>
@@ -193,9 +193,9 @@ export default function YouTubeAnalyticsPage() {
       </div>
 
       {/* Section 2: Filter bar */}
-      <div className="w-full border-b border-[#222228] px-5 py-2 flex items-center justify-between bg-[#111114]">
+      <div className="w-full border-b border-[#2a2a5a] px-5 py-2 flex items-center justify-between bg-[#0f0f24]">
         <div className="flex items-center gap-3">
-          <div className="flex items-center bg-[#111114] border border-[#222228] rounded-[4px] overflow-hidden">
+          <div className="flex items-center bg-[#0f0f24] border border-[#2a2a5a] rounded-[4px] overflow-hidden">
             {[
               { label: 'Last 30', val: '30D' },
               { label: 'Last 90', val: '90D' },
@@ -206,8 +206,8 @@ export default function YouTubeAnalyticsPage() {
                 onClick={() => setDateRange(range.val as any)}
                 className={`px-3 py-1.5 text-[12px] font-medium transition-colors ${
                   dateRange === range.val || (dateRange === '1Y' && range.val === '1Y')
-                    ? 'bg-[#5b6cf9] text-white' 
-                    : 'text-[#888892] hover:bg-[#16161a] hover:text-[#ededf0]'
+                    ? 'bg-[#ff006e] text-white' 
+                    : 'text-[#9aa4d6] hover:bg-[#1a1a2e] hover:text-[#e6f7ff]'
                 }`}
               >
                 {range.label}
@@ -215,9 +215,9 @@ export default function YouTubeAnalyticsPage() {
             ))}
           </div>
 
-          <div className="w-[1px] h-4 bg-[#222228] mx-1" />
+          <div className="w-[1px] h-4 bg-[#2a2a5a] mx-1" />
 
-          <div className="flex items-center bg-[#111114] border border-[#222228] rounded-[4px] overflow-hidden">
+          <div className="flex items-center bg-[#0f0f24] border border-[#2a2a5a] rounded-[4px] overflow-hidden">
             {[
               { label: 'Views', val: 'views' },
               { label: 'Date', val: 'date' },
@@ -228,8 +228,8 @@ export default function YouTubeAnalyticsPage() {
                 onClick={() => setSortBy(sort.val as any)}
                 className={`px-3 py-1.5 text-[12px] font-medium transition-colors ${
                   sortBy === sort.val
-                    ? 'bg-[#222228] text-[#ededf0]' 
-                    : 'text-[#888892] hover:bg-[#16161a] hover:text-[#ededf0]'
+                    ? 'bg-[#2a2a5a] text-[#e6f7ff]' 
+                    : 'text-[#9aa4d6] hover:bg-[#1a1a2e] hover:text-[#e6f7ff]'
                 }`}
               >
                 {sort.label}
@@ -238,30 +238,30 @@ export default function YouTubeAnalyticsPage() {
           </div>
         </div>
 
-        <button className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] text-[#888892] hover:text-[#ededf0] hover:bg-[#16161a] rounded-[4px] transition-colors border border-transparent hover:border-[#222228]">
+        <button className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] text-[#9aa4d6] hover:text-[#e6f7ff] hover:bg-[#1a1a2e] rounded-[4px] transition-colors border border-transparent hover:border-[#2a2a5a]">
           <Download size={14} />
           Export CSV
         </button>
       </div>
 
       {/* Section 3: Video Performance Table */}
-      <div className="w-full flex-1 overflow-auto bg-[#0c0c0e]">
+      <div className="w-full flex-1 overflow-auto bg-[#05050c]">
         <table className="w-full text-left text-[12px]">
-          <thead className="sticky top-0 bg-[#0c0c0e] border-b border-[#222228] shadow-[0_1px_0_#222228] z-10">
+          <thead className="sticky top-0 bg-[#05050c] border-b border-[#2a2a5a] shadow-[0_1px_0_#2a2a5a] z-10">
             <tr>
-              <th className="px-5 py-3 font-medium text-[#888892] w-[40%]">Video</th>
-              <th className="px-5 py-3 font-medium text-[#888892]">Published</th>
-              <th className="px-5 py-3 font-medium text-[#888892] text-right">Views</th>
-              <th className="px-5 py-3 font-medium text-[#888892] text-right">Likes</th>
-              <th className="px-5 py-3 font-medium text-[#888892] text-right">Comments</th>
-              <th className="px-5 py-3 font-medium text-[#888892] text-right">Eng. Rate</th>
-              <th className="px-5 py-3 font-medium text-[#888892] w-[120px]">Performance</th>
+              <th className="px-5 py-3 font-medium text-[#9aa4d6] w-[40%]">Video</th>
+              <th className="px-5 py-3 font-medium text-[#9aa4d6]">Published</th>
+              <th className="px-5 py-3 font-medium text-[#9aa4d6] text-right">Views</th>
+              <th className="px-5 py-3 font-medium text-[#9aa4d6] text-right">Likes</th>
+              <th className="px-5 py-3 font-medium text-[#9aa4d6] text-right">Comments</th>
+              <th className="px-5 py-3 font-medium text-[#9aa4d6] text-right">Eng. Rate</th>
+              <th className="px-5 py-3 font-medium text-[#9aa4d6] w-[120px]">Performance</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#222228]">
+          <tbody className="divide-y divide-[#2a2a5a]">
             {filteredVideos.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-5 py-12 text-center text-[#50505a]">
+                <td colSpan={7} className="px-5 py-12 text-center text-[#6a6aa8]">
                   No videos found for this time range.
                 </td>
               </tr>
@@ -271,20 +271,20 @@ export default function YouTubeAnalyticsPage() {
                 const perfPct = Math.min(100, (video.view_count / maxViews) * 100);
                 
                 return (
-                  <tr key={video.video_id} className="hover:bg-[#111114] group transition-colors">
+                  <tr key={video.video_id} className="hover:bg-[#0f0f24] group transition-colors">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-[120px] h-[68px] rounded-[2px] bg-[#222228] overflow-hidden flex-shrink-0">
+                        <div className="w-[120px] h-[68px] rounded-[2px] bg-[#2a2a5a] overflow-hidden flex-shrink-0">
                            {video.thumbnail ? (
                              <img src={video.thumbnail} alt="" className="w-full h-full object-cover" />
                            ) : null}
                         </div>
-                        <span className="font-medium text-[#ededf0] line-clamp-2 leading-snug">
+                        <span className="font-medium text-[#e6f7ff] line-clamp-2 leading-snug">
                           {video.title}
                         </span>
                       </div>
                     </td>
-                    <td className="px-5 py-3 text-[#50505a] whitespace-nowrap">
+                    <td className="px-5 py-3 text-[#6a6aa8] whitespace-nowrap">
                       {new Date(video.published_at).toLocaleDateString(undefined, {
                         month: 'short', day: 'numeric', year: 'numeric'
                       })}
@@ -292,24 +292,24 @@ export default function YouTubeAnalyticsPage() {
                     <td className="px-5 py-3 text-right tabular-nums font-medium">
                       {video.view_count.toLocaleString()}
                     </td>
-                    <td className="px-5 py-3 text-right tabular-nums text-[#888892]">
+                    <td className="px-5 py-3 text-right tabular-nums text-[#9aa4d6]">
                       {video.like_count.toLocaleString()}
                     </td>
-                    <td className="px-5 py-3 text-right tabular-nums text-[#888892]">
+                    <td className="px-5 py-3 text-right tabular-nums text-[#9aa4d6]">
                       {video.comment_count.toLocaleString()}
                     </td>
                     <td className="px-5 py-3 text-right tabular-nums font-medium">
                       <span className={
-                        engRate >= 0.03 ? 'text-[#3fb950]' : 
-                        engRate <= 0.01 ? 'text-[#f85149]' : 'text-[#888892]'
+                        engRate >= 0.03 ? 'text-[#00ff9f]' : 
+                        engRate <= 0.01 ? 'text-[#ff3864]' : 'text-[#9aa4d6]'
                       }>
                         {(engRate * 100).toFixed(1)}%
                       </span>
                     </td>
                     <td className="px-5 py-3">
-                      <div className="w-full h-[4px] bg-[#222228] rounded-full overflow-hidden">
+                      <div className="w-full h-[4px] bg-[#2a2a5a] rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-[#5b6cf9] rounded-full" 
+                          className="h-full bg-[#ff006e] rounded-full" 
                           style={{ width: `${perfPct}%` }}
                         />
                       </div>
@@ -323,21 +323,21 @@ export default function YouTubeAnalyticsPage() {
       </div>
 
       {/* Section 4: Posting Patterns */}
-      <div className="w-full border-t border-[#222228] flex flex-col md:flex-row bg-[#111114]">
+      <div className="w-full border-t border-[#2a2a5a] flex flex-col md:flex-row bg-[#0f0f24]">
         {/* Left Column: Heatmap */}
-        <div className="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-[#222228] flex flex-col">
-          <div className="px-5 py-3 border-b border-[#222228]">
-            <span className="text-[12px] text-[#888892] font-medium uppercase tracking-wider">Upload Frequency</span>
+        <div className="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-[#2a2a5a] flex flex-col">
+          <div className="px-5 py-3 border-b border-[#2a2a5a]">
+            <span className="text-[12px] text-[#9aa4d6] font-medium uppercase tracking-wider">Upload Frequency</span>
           </div>
           <div className="p-5 flex-1 flex flex-col justify-center">
             <div className="flex">
-              <div className="flex flex-col gap-1 pr-3 pt-6 justify-between text-[10px] text-[#50505a] font-medium text-right w-10">
+              <div className="flex flex-col gap-1 pr-3 pt-6 justify-between text-[10px] text-[#6a6aa8] font-medium text-right w-10">
                 {DAYS.map(day => <span key={day} className="h-6 leading-6">{day}</span>)}
               </div>
               <div className="flex-1 overflow-x-auto pb-2">
                 <div className="flex flex-col gap-1 min-w-max">
                   {/* Header row */}
-                  <div className="flex gap-1 mb-1 ml-1 text-[10px] text-[#50505a] font-medium">
+                  <div className="flex gap-1 mb-1 ml-1 text-[10px] text-[#6a6aa8] font-medium">
                      {TIME_SLOTS.map(slot => (
                        <span key={slot} className="w-[36px] text-center truncate">{slot.split('-')[0]}</span>
                      ))}
@@ -350,9 +350,9 @@ export default function YouTubeAnalyticsPage() {
                          return (
                            <div 
                              key={`${rIdx}-${cIdx}`}
-                             className="w-[36px] h-[24px] rounded-[2px] transition-opacity hover:ring-1 ring-[#5b6cf9]"
+                             className="w-[36px] h-[24px] rounded-[2px] transition-opacity hover:ring-1 ring-[#ff006e]"
                              style={{ 
-                               backgroundColor: val > 0 ? '#5b6cf9' : '#222228',
+                               backgroundColor: val > 0 ? '#ff006e' : '#2a2a5a',
                                opacity: val > 0 ? opacity : 1
                              }}
                              title={`${DAYS[rIdx]} ${TIME_SLOTS[cIdx]}: ${val} videos`}
@@ -369,33 +369,33 @@ export default function YouTubeAnalyticsPage() {
 
         {/* Right Column: Best Time to Post */}
         <div className="w-full md:w-1/2 flex flex-col">
-          <div className="px-5 py-3 border-b border-[#222228]">
-            <span className="text-[12px] text-[#888892] font-medium uppercase tracking-wider">Best Time to Post</span>
+          <div className="px-5 py-3 border-b border-[#2a2a5a]">
+            <span className="text-[12px] text-[#9aa4d6] font-medium uppercase tracking-wider">Best Time to Post</span>
           </div>
           <div className="p-5 flex-1 flex flex-col justify-center gap-6">
             
             <div className="flex items-center gap-5">
-              <div className="w-12 h-12 rounded-[4px] bg-[#5b6cf9]/10 border border-[#5b6cf9]/20 flex items-center justify-center text-[#5b6cf9]">
+              <div className="w-12 h-12 rounded-[4px] bg-[#ff006e]/10 border border-[#ff006e]/20 flex items-center justify-center text-[#ff006e]">
                 <Clock size={24} />
               </div>
               <div className="flex flex-col">
-                <span className="text-[24px] font-semibold text-[#ededf0] leading-none mb-1">
-                  {bestTimeInsight.day}s <span className="text-[#888892] font-normal text-[18px]">at</span> {bestTimeInsight.time}
+                <span className="text-[24px] font-semibold text-[#e6f7ff] leading-none mb-1">
+                  {bestTimeInsight.day}s <span className="text-[#9aa4d6] font-normal text-[18px]">at</span> {bestTimeInsight.time}
                 </span>
-                <span className="text-[13px] text-[#888892]">
+                <span className="text-[13px] text-[#9aa4d6]">
                   Based on highest average views ({formatNum(bestTimeInsight.views)} avg)
                 </span>
               </div>
             </div>
 
             <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between py-2 border-b border-[#222228]">
-                <span className="text-[12px] text-[#888892]">Most frequent upload day</span>
-                <span className="text-[12px] font-medium text-[#ededf0]">{mostUploadsDay}</span>
+              <div className="flex items-center justify-between py-2 border-b border-[#2a2a5a]">
+                <span className="text-[12px] text-[#9aa4d6]">Most frequent upload day</span>
+                <span className="text-[12px] font-medium text-[#e6f7ff]">{mostUploadsDay}</span>
               </div>
-              <div className="flex items-center justify-between py-2 border-b border-[#222228]">
-                <span className="text-[12px] text-[#888892]">Performance vs Average</span>
-                <span className={`text-[12px] font-medium ${perfVsAvg >= 0 ? 'text-[#3fb950]' : 'text-[#f85149]'}`}>
+              <div className="flex items-center justify-between py-2 border-b border-[#2a2a5a]">
+                <span className="text-[12px] text-[#9aa4d6]">Performance vs Average</span>
+                <span className={`text-[12px] font-medium ${perfVsAvg >= 0 ? 'text-[#00ff9f]' : 'text-[#ff3864]'}`}>
                   {perfVsAvg >= 0 ? '+' : ''}{perfVsAvg.toFixed(1)}% views
                 </span>
               </div>
