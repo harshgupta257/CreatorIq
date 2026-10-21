@@ -44,7 +44,7 @@ export function HeatmapGrid({ recommendedPostingTime }: { recommendedPostingTime
                     isBest ? 'border border-accent' : 'border border-transparent'
                   )}
                   style={{
-                    backgroundColor: `rgba(91, 108, 249, ${opacity * 0.8 + 0.1})`,
+                    backgroundColor: `rgba(255,0,110, ${opacity * 0.8 + 0.1})`,
                   }}
                   title={`${day} ${t}: ${val.toFixed(2)}`}
                 />
