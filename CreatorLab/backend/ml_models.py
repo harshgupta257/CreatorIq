@@ -8,6 +8,8 @@ import re
 from collections import Counter, defaultdict
 from datetime import datetime, timezone, timedelta
 
+from youtube_api import parse_duration_seconds as _parse_duration_seconds
+
 logger = logging.getLogger("creatoriq.ml")
 
 # ── optional imports ───────────────────────────────────────────────────────────
@@ -33,16 +35,6 @@ def _parse_iso(iso: str) -> datetime:
         return datetime.fromisoformat(iso.replace("Z", "+00:00"))
     except Exception:
         return datetime.now(tz=timezone.utc)
-
-
-def _parse_duration_seconds(duration: str) -> int:
-    """ISO-8601 duration → seconds."""
-    pattern = r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?"
-    m = re.match(pattern, duration or "")
-    if not m:
-        return 0
-    h, mn, s = (int(v or 0) for v in m.groups())
-    return h * 3600 + mn * 60 + s
 
 
 def _extract_features(video: dict) -> dict:

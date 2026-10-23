@@ -4,6 +4,7 @@ CreatorIQ — Google Trends Analyzer (pytrends)
 
 import logging
 import time
+from collections import Counter
 
 logger = logging.getLogger("creatoriq.trends")
 
@@ -48,13 +49,77 @@ _DEMO_GEO = {
     "DE": 42, "FR": 37, "BR": 51, "JP": 29, "MX": 44,
 }
 
-_DEMO_RISING = [
-    {"topic": "AI content creation", "growth": "+900%"},
-    {"topic": "YouTube Shorts monetisation", "growth": "+450%"},
-    {"topic": "Podcast video format", "growth": "+320%"},
-    {"topic": "Creator funds 2024", "growth": "+280%"},
-    {"topic": "Live streaming tips", "growth": "+210%"},
-]
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  Topic keyword extraction (from a channel's videos)
+# ══════════════════════════════════════════════════════════════════════════════
+# Common words that are not useful Google Trends queries
+_TOPIC_STOPWORDS = {
+    "the","and","for","with","how","what","this","that","are","you",
+    "your","new","our","why","was","has","its","get","can","but","not",
+    "have","from","they","will","been","more","than","also","just","into",
+    "about","when","there","their","which","would","could","should",
+    # Hindi romanized stopwords
+    "kya","hai","kyu","kyun","aap","main","mera","mere","kaise","kab",
+    "yeh","iska","uska","hain","bhi","unka","wala","wali","nahi","iske",
+    # Generic YouTube/video words
+    "video","hindi","english","channel","part","full","short","live",
+    "subscribe","like","share","comment","watch","today","2024","2025","2026",
+}
+
+# Generic/entertainment words that inflate counts but have no trend signal
+_TOPIC_BLACKLIST = {
+    # Too generic — no trends signal
+    "interstellar","inspired","think","yourself","leave","stop",
+    "back","time","again","know","good","great","best","mind",
+    "real","true","life","love","feel","make","work","need",
+    # Common philosophical/motivational fillers
+    "past","future","reality","people","world","human","things",
+    "thing","does","doing","being","become","always",
+    "never","every","other","power","point","right","wrong",
+    "words","word","idea","each","even","still","only",
+    "them","then","they","this","with","your","mine","here",
+    # Content-generic
+    "tips","ways","part","full","type","kind","fact","story",
+    "show","talk","tell","said","says","ask","answer","read",
+}
+
+
+def _topic_words(text: str) -> list[str]:
+    words = []
+    for word in text.lower().split():
+        word = word.strip(".,!?-\"'#@|()")
+        if len(word) > 3 and word not in _TOPIC_STOPWORDS and word.isalpha():
+            words.append(word)
+    return words
+
+
+def extract_topic_keywords(videos: list[dict], top_n: int = 3) -> list[str]:
+    """
+    Pick the most frequent channel-specific words from video tags and titles.
+    Tags are split into words ("stop overthinking" → "overthinking").
+    """
+    counter: Counter = Counter()
+    for v in videos:
+        for tag in (v.get("tags") or []):
+            counter.update(_topic_words(tag))
+        counter.update(_topic_words(v.get("title") or ""))
+
+    best = [w for w, _ in counter.most_common(40) if w not in _TOPIC_BLACKLIST]
+    return best[:top_n]
+
+
+def tag_word_frequency(videos: list[dict], top_n: int = 25) -> list[dict]:
+    """Word frequency across video tags, for the channel topic profile."""
+    counter: Counter = Counter(
+        word
+        for v in videos
+        for tag in (v.get("tags") or [])
+        for word in tag.lower().split()
+        if len(word) > 3 and word.isalpha()
+    )
+    return [{"word": w, "count": c} for w, c in counter.most_common(top_n)]
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -262,15 +327,15 @@ class GoogleTrendsAnalyzer:
     def get_rising_topics(self, category: str = "entertainment") -> list[dict]:
         """
         Get currently trending topics (best-effort; pytrends trending_searches).
-        Falls back to demo list on any error.
+        Returns an empty list on any error — never placeholder topics.
         """
         if not self._has_api():
-            return _DEMO_RISING
+            return []
 
         try:
             df = self._pytrends.trending_searches(pn="united_states")
             topics = df[0].tolist()[:10]
             return [{"topic": t, "growth": "trending"} for t in topics]
         except Exception as exc:
-            logger.warning("get_rising_topics error: %s — returning demo.", exc)
-            return _DEMO_RISING
+            logger.warning("get_rising_topics error: %s", exc)
+            return []

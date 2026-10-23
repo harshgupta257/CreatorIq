@@ -4,6 +4,9 @@ CreatorIQ Analytics Platform — Main Flask Server
 
 import os
 import logging
+import secrets
+import threading
+from functools import lru_cache
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -19,50 +22,95 @@ logging.basicConfig(
 logger = logging.getLogger("creatoriq.app")
 
 # ── local modules ──────────────────────────────────────────────────────────────
-from youtube_api import YouTubeAnalyzer
+from youtube_api import YouTubeAnalyzer, YouTubeAPIError
 from reddit_api import RedditSentimentCollector
 from sentiment_analysis import SentimentAnalyzer
-from google_trends import GoogleTrendsAnalyzer
+from google_trends import GoogleTrendsAnalyzer, extract_topic_keywords, tag_word_frequency
 from news_scraper import NewsAnalyzer
 from ml_models import EngagementPredictor
 from instagram_api import InstagramAnalyzer
 
 # ── app factory ────────────────────────────────────────────────────────────────
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key-change-in-prod")
+app.secret_key = os.getenv("SECRET_KEY") or secrets.token_hex(32)
+if not os.getenv("SECRET_KEY"):
+    logger.warning("SECRET_KEY not set — using a random per-process key.")
 
+# Comma-separated list of frontend origins allowed to call the API ("*" = any)
+_DEFAULT_ORIGINS = (
+    "http://localhost:3000,http://127.0.0.1:3000,"
+    "http://localhost:5500,http://127.0.0.1:5500,"
+    "https://creator-iq-gules.vercel.app"
+)
+ALLOWED_ORIGINS = [
+    o.strip() for o in os.getenv("ALLOWED_ORIGINS", _DEFAULT_ORIGINS).split(",") if o.strip()
+]
 CORS(
     app,
-    resources={r"/api/*": {"origins": "*"}},
-    supports_credentials=True,
+    resources={r"/api/*": {"origins": "*" if "*" in ALLOWED_ORIGINS else ALLOWED_ORIGINS}},
 )
 
-# ── singleton helpers (lazy-init so missing keys just log a warning) ───────────
+# ── shared service instances (lazy-init so missing keys just log a warning) ────
+@lru_cache(maxsize=None)
 def _yt():
     return YouTubeAnalyzer()
 
+@lru_cache(maxsize=None)
 def _reddit():
     return RedditSentimentCollector()
 
+@lru_cache(maxsize=None)
 def _sentiment():
     return SentimentAnalyzer()
 
+@lru_cache(maxsize=None)
 def _trends():
     return GoogleTrendsAnalyzer()
 
+@lru_cache(maxsize=None)
 def _news():
     return NewsAnalyzer()
 
 def _ml():
+    # Not shared: the predictor holds per-channel training state.
     return EngagementPredictor()
 
+@lru_cache(maxsize=None)
 def _ig():
     return InstagramAnalyzer()
+
+# pytrends keeps payload state on the client, so serialise access to it
+_trends_lock = threading.Lock()
 
 
 # ── utility ────────────────────────────────────────────────────────────────────
 def error_response(message: str, code: int = 400):
     return jsonify({"success": False, "error": message}), code
+
+
+def server_error(exc: Exception, where: str):
+    """Log the full error server-side; return only a safe message to the client."""
+    if isinstance(exc, YouTubeAPIError):
+        logger.warning("%s: %s", where, exc)
+        return error_response(str(exc), exc.status)
+    logger.exception("%s error", where)
+    return error_response("Internal server error.", 500)
+
+
+class BadParam(ValueError):
+    pass
+
+
+def int_arg(name: str, default: int, lo: int, hi: int) -> int:
+    """Read an integer query param clamped to [lo, hi]; raise BadParam if invalid."""
+    raw = request.args.get(name)
+    if raw is None or raw.strip() == "":
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        raise BadParam(f"Query param '{name}' must be an integer.") from None
+    return max(lo, min(value, hi))
 
 
 def ok_response(data, message: str = "OK"):
@@ -116,8 +164,7 @@ def youtube_channel():
             return error_response("Channel not found or API key missing.", 404)
         return ok_response(info)
     except Exception as exc:
-        logger.exception("youtube_channel error")
-        return error_response(str(exc), 500)
+        return server_error(exc, "youtube_channel")
 
 
 @app.route("/api/youtube/videos", methods=["GET"])
@@ -129,7 +176,10 @@ def youtube_videos():
     channel_id = request.args.get("channel_id", "").strip()
     if not channel_id:
         return error_response("Query param 'channel_id' is required.")
-    max_results = min(int(request.args.get("max_results", 50)), 200)
+    try:
+        max_results = int_arg("max_results", 50, 1, 200)
+    except BadParam as exc:
+        return error_response(str(exc))
     try:
         yt = _yt()
         videos = yt.get_channel_videos(channel_id, max_results=max_results)
@@ -147,8 +197,7 @@ def youtube_videos():
             }
         )
     except Exception as exc:
-        logger.exception("youtube_videos error")
-        return error_response(str(exc), 500)
+        return server_error(exc, "youtube_videos")
 
 
 @app.route("/api/youtube/comments", methods=["GET"])
@@ -160,14 +209,16 @@ def youtube_comments():
     video_id = request.args.get("video_id", "").strip()
     if not video_id:
         return error_response("Query param 'video_id' is required.")
-    max_results = min(int(request.args.get("max_results", 100)), 500)
+    try:
+        max_results = int_arg("max_results", 100, 1, 500)
+    except BadParam as exc:
+        return error_response(str(exc))
     try:
         yt = _yt()
         comments = yt.get_video_comments(video_id, max_results=max_results)
         return ok_response({"video_id": video_id, "comment_count": len(comments), "comments": comments})
     except Exception as exc:
-        logger.exception("youtube_comments error")
-        return error_response(str(exc), 500)
+        return server_error(exc, "youtube_comments")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -192,6 +243,7 @@ def reddit_sentiment():
         return ok_response(
             {
                 "query": query,
+                "source_available": reddit.is_available(),
                 "post_count": len(posts),
                 "sentiment": sentiment,
                 "top_words": word_freq[:30],
@@ -199,8 +251,7 @@ def reddit_sentiment():
             }
         )
     except Exception as exc:
-        logger.exception("reddit_sentiment error")
-        return error_response(str(exc), 500)
+        return server_error(exc, "reddit_sentiment")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -227,77 +278,17 @@ def google_trends():
     # ── Step 1: decide which keyword to search ──────────────────────────────
     keyword_used  = query or "youtube"
     topic_keywords: list[str] = []
+    videos: list[dict] = []
 
     if channel_id:
         try:
-            yt     = _yt()
-            videos = yt.get_channel_videos(channel_id, max_results=20)
-
-            from collections import Counter
-            word_counter: Counter = Counter()
-
-            # Extended stopwords — common but not searchable on trends
-            STOPWORDS = {
-                "the","and","for","with","how","what","this","that","are","you",
-                "your","new","our","why","was","has","its","get","can","but","not",
-                "have","from","they","will","been","more","than","also","just","into",
-                "about","when","there","their","which","would","could","should",
-                # Hindi romanized stopwords
-                "kya","hai","kyu","kyun","aap","main","mera","mere","kaise","kab",
-                "yeh","iska","uska","hain","bhi","unka","wala","wali","nahi","iske",
-                # Generic YouTube/video words
-                "video","hindi","english","channel","part","full","short","live",
-                "subscribe","like","share","comment","watch","today","2024","2025","2026",
-            }
-
-            # Split each tag into individual words — "stop overthinking" → "overthinking"
-            for v in videos:
-                for tag in (v.get("tags") or []):
-                    for word in tag.lower().split():
-                        word = word.strip(".,!?-\"'#@|()")
-                        if len(word) > 3 and word not in STOPWORDS and word.isalpha():
-                            word_counter[word] += 1
-
-            # Also split title words
-            for v in videos:
-                for word in (v.get("title") or "").lower().split():
-                    word = word.strip(".,!?-\"'#@|()?!")
-                    if len(word) > 3 and word not in STOPWORDS and word.isalpha():
-                        word_counter[word] += 1
-
-            # Blacklist generic/entertainment words that inflate counts but have no trend signal
-            BLACKLIST = {
-                # Too generic — no trends signal
-                "interstellar","inspired","think","yourself","leave","stop",
-                "back","time","again","know","good","great","best","mind",
-                "real","true","life","love","feel","make","work","need",
-                # Common philosophical/motivational fillers
-                "past","future","reality","people","world","human","things",
-                "thing","does","doing","being","become","become","always",
-                "never","every","other","power","point","right","wrong",
-                "words","word","idea","each","even","still","only","every",
-                "them","then","they","this","with","your","mine","here",
-                # Content-generic
-                "tips","ways","part","full","type","kind","fact","story",
-                "show","talk","tell","said","says","ask","answer","read",
-            }
-
-            # Pick top 3 most frequent channel-specific words (4+ chars, not blacklisted)
-            best = [(w, c) for w, c in word_counter.most_common(40)
-                    if len(w) >= 4 and w not in BLACKLIST]
-
-            top_tags = [w for w, _ in best[:3]]
-
-            if top_tags:
-                topic_keywords = top_tags
-                keyword_used   = top_tags[0]
+            videos = _yt().get_channel_videos(channel_id, max_results=20)
+            topic_keywords = extract_topic_keywords(videos)
+            if topic_keywords:
+                keyword_used = topic_keywords[0]
                 logger.info("Trends keywords from video content: %s", topic_keywords)
-            else:
-                keyword_used = query or "youtube"
         except Exception as exc:
             logger.warning("Tag extraction failed: %s — falling back to query.", exc)
-            keyword_used = query or "youtube"
-
 
     if not topic_keywords:
         topic_keywords = [keyword_used]
@@ -305,9 +296,10 @@ def google_trends():
     # ── Step 2: query pytrends ──────────────────────────────────────────────
     try:
         gt = _trends()
-        interest, kws_in_data, rl1 = gt.get_interest_over_time(topic_keywords, timeframe=timeframe)
-        related,  rl2 = gt.get_related_queries(keyword_used)
-        geo,      rl3 = gt.get_geographic_interest(keyword_used)
+        with _trends_lock:
+            interest, kws_in_data, rl1 = gt.get_interest_over_time(topic_keywords, timeframe=timeframe)
+            related,  rl2 = gt.get_related_queries(keyword_used)
+            geo,      rl3 = gt.get_geographic_interest(keyword_used)
         rate_limited  = rl1 or rl2 or rl3
 
         return ok_response(
@@ -322,19 +314,11 @@ def google_trends():
                 "geographic_interest": geo,
                 "rate_limited":        rate_limited,
                 # Word frequency from video tags for channel topic profile
-                "word_frequency":      [{"word": w, "count": c}
-                                        for w, c in __import__("collections").Counter(
-                                            word
-                                            for v in (locals().get("videos") or [])
-                                            for tag in (v.get("tags") or [])
-                                            for word in tag.lower().split()
-                                            if len(word) > 3 and word.isalpha()
-                                        ).most_common(25)],
+                "word_frequency":      tag_word_frequency(videos),
             }
         )
     except Exception as exc:
-        logger.exception("google_trends error")
-        return error_response(str(exc), 500)
+        return server_error(exc, "google_trends")
 
 
 
@@ -353,9 +337,10 @@ def news_sentiment():
         return error_response("Query param 'query' is required.")
     try:
         na = _news()
-        articles = na.search_news(query)
-        summary = na.get_news_sentiment_summary(query)
-        recent = na.get_recent_news(query)
+        # Fetch once; the summary and recent list are derived from the same articles
+        articles = na.search_news(query, max_articles=40)
+        summary = na.summarize_sentiment(articles)
+        recent = na.filter_recent(articles)
         return ok_response(
             {
                 "query": query,
@@ -366,8 +351,7 @@ def news_sentiment():
             }
         )
     except Exception as exc:
-        logger.exception("news_sentiment error")
-        return error_response(str(exc), 500)
+        return server_error(exc, "news_sentiment")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -419,15 +403,14 @@ def combined_sentiment():
             "channel_name":     channel_name,
             "youtube_sentiment":  yt_sentiment,
             "reddit_sentiment":   reddit_sentiment,
-            "reddit_connected":   len(reddit_posts) > 0,
+            "reddit_connected":   reddit.is_available(),
             "news_sentiment":     news_sentiment,
             "combined_sentiment": combined,
             "sentiment_over_time": trend_over_time,
             "word_frequency":     word_freq,
         })
     except Exception as exc:
-        logger.exception("combined_sentiment error")
-        return error_response(str(exc), 500)
+        return server_error(exc, "combined_sentiment")
 
 
 
@@ -455,7 +438,7 @@ def ml_predictions():
 
         # Fetch channel info for subscriber count (used in growth forecast)
         try:
-            channel_info = yt.get_channel_info(f"https://www.youtube.com/channel/{channel_id}")
+            channel_info = yt.get_channel_info(channel_id) or {}
         except Exception:
             channel_info = {}
 
@@ -504,7 +487,8 @@ def ml_predictions():
 
         # 7. Content recommendations
         try:
-            rising = gt.get_rising_topics()
+            with _trends_lock:
+                rising = gt.get_rising_topics()
         except Exception:
             rising = []
         topics = ml.recommend_content_topics(videos, rising)
@@ -532,8 +516,7 @@ def ml_predictions():
             "feature_importance":     importance,
         })
     except Exception as exc:
-        logger.exception("ml_predictions error")
-        return error_response(str(exc), 500)
+        return server_error(exc, "ml_predictions")
 
 
 
@@ -557,8 +540,7 @@ def instagram_connect():
         token_data = ig.exchange_code_for_token(code)
         return ok_response(token_data, message="Instagram connected successfully")
     except Exception as exc:
-        logger.exception("instagram_connect error")
-        return error_response(str(exc), 500)
+        return server_error(exc, "instagram_connect")
 
 
 @app.route("/api/instagram/insights", methods=["GET"])
@@ -585,8 +567,7 @@ def instagram_insights():
             }
         )
     except Exception as exc:
-        logger.exception("instagram_insights error")
-        return error_response(str(exc), 500)
+        return server_error(exc, "instagram_insights")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -612,6 +593,6 @@ def internal_error(_err):
 # ══════════════════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
-    debug = os.getenv("FLASK_DEBUG", "true").lower() == "true"
+    debug = os.getenv("FLASK_DEBUG", "false").lower() == "true"
     logger.info("Starting CreatorIQ on port %s (debug=%s)", port, debug)
     app.run(host="0.0.0.0", port=port, debug=debug)
