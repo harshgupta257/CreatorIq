@@ -5,9 +5,12 @@ Uses requests directly (not google-api-python-client) for reliability.
 
 import os
 import re
+import time
 import logging
-from datetime import datetime, timezone
+import threading
+from datetime import datetime
 from collections import defaultdict
+from urllib.parse import urlparse
 
 import requests
 from dotenv import load_dotenv
@@ -16,6 +19,59 @@ load_dotenv()
 logger = logging.getLogger("creatoriq.youtube")
 
 YT_BASE = "https://www.googleapis.com/youtube/v3"
+
+# Video lists are cached per channel so the dashboard's endpoints share one fetch.
+_CACHE_TTL_SECS = 600
+_MIN_FETCH = 50   # always fetch a full page; it costs the same quota as fewer
+_video_cache: dict[str, tuple[float, int, list]] = {}
+_cache_lock = threading.Lock()
+
+
+class YouTubeAPIError(Exception):
+    """Upstream YouTube error with a message that is safe to show to clients."""
+
+    def __init__(self, message: str, status: int = 502):
+        super().__init__(message)
+        self.status = status
+
+
+def parse_duration_seconds(iso: str) -> int:
+    """Convert ISO 8601 duration (PT1H2M3S) to seconds."""
+    m = re.match(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?", iso or "")
+    if not m:
+        return 0
+    h, mi, s = (int(x or 0) for x in m.groups())
+    return h * 3600 + mi * 60 + s
+
+
+def _parse_channel_input(raw: str) -> tuple[str, str]:
+    """
+    Classify user input into (kind, value) where kind is one of
+    'id', 'handle', 'username', 'custom' or 'name'.
+    """
+    text = raw.strip()
+    if "youtube.com" in text or "youtu.be" in text:
+        if not re.match(r"^[a-z]+://", text):
+            text = "https://" + text
+        parts = [p for p in urlparse(text).path.split("/") if p]
+        if parts:
+            first = parts[0]
+            if first == "channel" and len(parts) > 1:
+                return "id", parts[1]
+            if first.startswith("@"):
+                return "handle", first[1:]
+            if first == "user" and len(parts) > 1:
+                return "username", parts[1]
+            if first == "c" and len(parts) > 1:
+                return "custom", parts[1]
+            return "custom", first
+        return "name", ""
+
+    if re.fullmatch(r"UC[\w-]{22}", text):
+        return "id", text
+    if text.startswith("@"):
+        return "handle", text[1:]
+    return "name", text
 
 
 class YouTubeAnalyzer:
@@ -29,56 +85,77 @@ class YouTubeAnalyzer:
     # ── internal helpers ──────────────────────────────────────────────────────
 
     def _get(self, endpoint: str, params: dict) -> dict:
-        """Make a GET request to the YouTube Data API v3."""
-        params["key"] = self.api_key
-        r = requests.get(f"{YT_BASE}/{endpoint}", params=params, timeout=15)
-        r.raise_for_status()
-        return r.json()
+        """
+        Make a GET request to the YouTube Data API v3.
+        The key is sent as a header so it never appears in URLs, logs or errors.
+        """
+        try:
+            r = requests.get(
+                f"{YT_BASE}/{endpoint}",
+                params=params,
+                headers={"X-Goog-Api-Key": self.api_key},
+                timeout=15,
+            )
+        except requests.RequestException as exc:
+            logger.warning("YouTube %s request failed: %s", endpoint, type(exc).__name__)
+            raise YouTubeAPIError("Could not reach the YouTube API.") from None
 
-    @staticmethod
-    def _parse_duration_seconds(iso: str) -> int:
-        """Convert ISO 8601 duration (PT1H2M3S) to seconds."""
-        m = re.match(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?", iso or "")
-        if not m:
-            return 0
-        h, mi, s = (int(x or 0) for x in m.groups())
-        return h * 3600 + mi * 60 + s
+        if r.ok:
+            return r.json()
+
+        reason = ""
+        try:
+            errors = r.json().get("error", {}).get("errors", [])
+            reason = errors[0].get("reason", "") if errors else ""
+        except ValueError:
+            pass
+        logger.warning("YouTube %s returned HTTP %s (%s)", endpoint, r.status_code, reason or "no reason")
+
+        if reason in ("quotaExceeded", "dailyLimitExceeded", "rateLimitExceeded"):
+            raise YouTubeAPIError("YouTube API quota exceeded. Try again later.", 429)
+        if reason in ("keyInvalid", "keyExpired") or (r.status_code == 400 and "key" in reason.lower()):
+            raise YouTubeAPIError("YouTube API key is invalid.", 502)
+        if r.status_code == 404:
+            raise YouTubeAPIError("Requested YouTube resource was not found.", 404)
+        raise YouTubeAPIError(f"YouTube API request failed (HTTP {r.status_code}).", 502)
+
+    # Kept for backwards compatibility with existing callers.
+    _parse_duration_seconds = staticmethod(parse_duration_seconds)
 
     # ── public API ────────────────────────────────────────────────────────────
 
     def get_channel_info(self, url_or_handle: str) -> dict | None:
         """
-        Accept: @handle, channel URL, channel name, or channel ID.
-        Returns a standardised channel dict or None.
+        Accept: @handle, channel URL (/channel/, /@, /user/, /c/), channel name,
+        or channel ID. Returns a standardised channel dict or None.
         """
         if not self.api_key:
             return None
 
-        # 1. Extract handle / ID from URL
-        handle = url_or_handle.strip()
-        handle = re.sub(r"https?://(www\.)?youtube\.com/", "", handle)
-        handle = handle.lstrip("/")
+        kind, value = _parse_channel_input(url_or_handle)
+        if not value:
+            return None
 
-        # 2. Decide lookup strategy
-        if handle.startswith("UC") and len(handle) == 24:
-            return self._channel_by_id(handle)
+        if kind == "id":
+            return self._channel_by_id(value)
 
-        if handle.startswith("@"):
-            result = self._channel_by_handle(handle)
-            if result is None:
-                # Try search fallback with the handle text
-                result = self._channel_by_search(handle[1:])
-            return result
+        if kind == "handle":
+            return self._channel_by_handle(value) or self._channel_by_search(value)
 
-        # Bare handle (no @): try direct handle first
-        result = self._channel_by_handle("@" + handle)
+        if kind == "username":
+            return (self._channel_by_username(value)
+                    or self._channel_by_handle(value)
+                    or self._channel_by_search(value))
+
+        # custom URL or bare name: try it as a handle first (cheap), then search
+        result = self._channel_by_handle(value)
         if result is None:
             # Collapse trailing repeated chars (thinkkagainnnn → thinkkagainnn)
-            cleaned = re.sub(r'(.)\1{2,}', lambda m: m.group(1) * 2, handle)
-            if cleaned != handle:
-                result = self._channel_by_handle("@" + cleaned)
+            cleaned = re.sub(r'(.)\1{2,}', lambda m: m.group(1) * 2, value)
+            if cleaned != value:
+                result = self._channel_by_handle(cleaned)
         if result is None:
-            result = self._channel_by_search(handle)
+            result = self._channel_by_search(value)
         return result
 
     def _channel_by_id(self, channel_id: str) -> dict | None:
@@ -97,7 +174,22 @@ class YouTubeAnalyzer:
             })
             items = data.get("items", [])
             return self._parse_channel(items[0]) if items else None
-        except Exception:
+        except YouTubeAPIError as exc:
+            if exc.status == 429:
+                raise
+            return None
+
+    def _channel_by_username(self, username: str) -> dict | None:
+        try:
+            data = self._get("channels", {
+                "part": "snippet,statistics,contentDetails",
+                "forUsername": username,
+            })
+            items = data.get("items", [])
+            return self._parse_channel(items[0]) if items else None
+        except YouTubeAPIError as exc:
+            if exc.status == 429:
+                raise
             return None
 
     def _channel_by_search(self, query: str) -> dict | None:
@@ -131,35 +223,69 @@ class YouTubeAnalyzer:
             "published_at":     sn.get("publishedAt", ""),
         }
 
+    def _uploads_playlist_id(self, channel_id: str) -> str | None:
+        if re.fullmatch(r"UC[\w-]{22}", channel_id):
+            return "UU" + channel_id[2:]
+        data = self._get("channels", {"part": "contentDetails", "id": channel_id})
+        items = data.get("items", [])
+        if not items:
+            return None
+        return items[0].get("contentDetails", {}).get("relatedPlaylists", {}).get("uploads")
+
     def get_channel_videos(self, channel_id: str, max_results: int = 50) -> list:
         """
         Returns up to max_results recent videos with full statistics.
+        Reads the channel's uploads playlist (1 quota unit per page, vs 100 for
+        search) and caches the result for a few minutes.
         """
         if not self.api_key:
+            return []
+
+        with _cache_lock:
+            cached = _video_cache.get(channel_id)
+        if cached:
+            fetched_at, fetched_n, videos = cached
+            if time.time() - fetched_at < _CACHE_TTL_SECS and (
+                max_results <= fetched_n or len(videos) < fetched_n
+            ):
+                return videos[:max_results]
+
+        fetch_n = max(max_results, _MIN_FETCH)
+        videos = self._fetch_channel_videos(channel_id, fetch_n)
+        with _cache_lock:
+            _video_cache[channel_id] = (time.time(), fetch_n, videos)
+        return videos[:max_results]
+
+    def _fetch_channel_videos(self, channel_id: str, max_results: int) -> list:
+        playlist_id = self._uploads_playlist_id(channel_id)
+        if not playlist_id:
             return []
 
         videos = []
         page_token = None
 
-        # Step 1: get video IDs via search
         while len(videos) < max_results:
             params = {
-                "part": "snippet",
-                "channelId": channel_id,
-                "order": "date",
-                "type": "video",
+                "part": "contentDetails",
+                "playlistId": playlist_id,
                 "maxResults": min(50, max_results - len(videos)),
             }
             if page_token:
                 params["pageToken"] = page_token
 
-            data = self._get("search", params)
+            try:
+                data = self._get("playlistItems", params)
+            except YouTubeAPIError as exc:
+                if exc.status == 404:   # channel has no public uploads
+                    break
+                raise
             items = data.get("items", [])
             if not items:
                 break
 
-            # Step 2: batch-fetch statistics
-            ids = [i["id"]["videoId"] for i in items if i.get("id", {}).get("videoId")]
+            # Batch-fetch statistics
+            ids = [i["contentDetails"]["videoId"] for i in items
+                   if i.get("contentDetails", {}).get("videoId")]
             if ids:
                 stat_data = self._get("videos", {
                     "part": "snippet,statistics,contentDetails",
@@ -177,7 +303,7 @@ class YouTubeAnalyzer:
                         "like_count":    int(st.get("likeCount", 0)),
                         "comment_count": int(st.get("commentCount", 0)),
                         "duration":      cd.get("duration", ""),
-                        "duration_secs": self._parse_duration_seconds(cd.get("duration", "")),
+                        "duration_secs": parse_duration_seconds(cd.get("duration", "")),
                         "thumbnail":     (sn.get("thumbnails", {}).get("high") or
                                           sn.get("thumbnails", {}).get("medium") or
                                           {}).get("url", ""),
@@ -189,10 +315,11 @@ class YouTubeAnalyzer:
             if not page_token:
                 break
 
+        videos.sort(key=lambda v: v.get("published_at", ""), reverse=True)
         return videos[:max_results]
 
     def get_video_comments(self, video_id: str, max_results: int = 100) -> list:
-        """Return top comments for a video."""
+        """Return top comments for a video (plain text, no HTML)."""
         if not self.api_key:
             return []
         try:
@@ -200,6 +327,7 @@ class YouTubeAnalyzer:
                 "part": "snippet",
                 "videoId": video_id,
                 "order": "relevance",
+                "textFormat": "plainText",
                 "maxResults": min(max_results, 100),
             })
             comments = []
@@ -207,13 +335,16 @@ class YouTubeAnalyzer:
                 top = item["snippet"]["topLevelComment"]["snippet"]
                 comments.append({
                     "comment_id":   item["id"],
-                    "text":         top.get("textDisplay", ""),
+                    "text":         top.get("textOriginal") or top.get("textDisplay", ""),
                     "author":       top.get("authorDisplayName", ""),
                     "likes":        int(top.get("likeCount", 0)),
                     "published_at": top.get("publishedAt", ""),
                 })
             return comments
-        except Exception as exc:
+        except YouTubeAPIError as exc:
+            if exc.status == 429:
+                raise
+            # Comments disabled or video unavailable
             logger.warning("get_video_comments(%s): %s", video_id, exc)
             return []
 
@@ -241,21 +372,26 @@ class YouTubeAnalyzer:
             return {"best_days": [], "day_distribution": {}, "posts_per_week": 0}
 
         day_counts: dict[str, int] = defaultdict(int)
+        dates = []
         for v in videos:
             try:
                 dt = datetime.fromisoformat(v["published_at"].replace("Z", "+00:00"))
                 day_counts[dt.strftime("%A")] += 1
+                dates.append(dt)
             except Exception:
                 pass
 
         sorted_days = sorted(day_counts.items(), key=lambda x: x[1], reverse=True)
         best_days = [d for d, _ in sorted_days[:3]]
-        total_weeks = max(len(videos) / 7, 1)
+
+        # Average uploads per week over the span the videos cover (at least one week)
+        span_weeks = (max(dates) - min(dates)).days / 7 if dates else 0
+        posts_per_week = len(dates) / max(span_weeks, 1)
 
         return {
             "best_days":       best_days,
             "day_distribution": dict(day_counts),
-            "posts_per_week":  round(len(videos) / total_weeks, 2),
+            "posts_per_week":  round(posts_per_week, 2),
         }
 
     def get_best_posting_times(self, videos: list) -> dict:

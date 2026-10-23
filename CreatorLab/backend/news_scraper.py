@@ -4,10 +4,11 @@ CreatorIQ — News RSS Scraper & Sentiment Analyzer (feedparser + Google News RS
 
 import logging
 import re
-import time
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from urllib.parse import quote_plus
+
+import requests
 
 logger = logging.getLogger("creatoriq.news")
 
@@ -17,7 +18,7 @@ try:
     _FEEDPARSER_AVAILABLE = True
 except ImportError:
     _FEEDPARSER_AVAILABLE = False
-    logger.warning("feedparser not installed; using demo news data.")
+    logger.warning("feedparser not installed; news data disabled.")
 
 # ── lazy import of local sentiment ─────────────────────────────────────────────
 _sentiment_analyzer = None
@@ -31,27 +32,12 @@ def _get_sa():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  Demo / fallback data
-# ══════════════════════════════════════════════════════════════════════════════
-_DEMO_ARTICLES = [
-    {
-        "title": f"Creator Spotlight: Growing audience with authenticity — article {i}",
-        "summary": f"Content creators are finding new ways to engage their audiences in {2024 + i // 6}.",
-        "url": f"https://example.com/news/article-{i}",
-        "published": (datetime.now(tz=timezone.utc) - timedelta(days=i)).isoformat(),
-        "source": "Tech News Daily",
-    }
-    for i in range(1, 11)
-]
-
-
-# ══════════════════════════════════════════════════════════════════════════════
 #  Main class
 # ══════════════════════════════════════════════════════════════════════════════
 class NewsAnalyzer:
     """
     Fetches and analyses news articles from Google News RSS feed.
-    Uses feedparser to parse RSS; falls back to demo data when unavailable.
+    Uses feedparser to parse RSS; returns no articles when unavailable.
     """
 
     _GOOGLE_NEWS_RSS = "https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
@@ -60,16 +46,19 @@ class NewsAnalyzer:
         if _FEEDPARSER_AVAILABLE:
             logger.info("NewsAnalyzer ready with feedparser.")
         else:
-            logger.warning("feedparser missing — demo data will be used.")
+            logger.warning("feedparser missing — news data disabled.")
 
     # ── internal ───────────────────────────────────────────────────────────────
     def _fetch_rss(self, query: str, max_articles: int = 20) -> list[dict]:
         """Fetch + parse Google News RSS for `query`."""
         url = self._GOOGLE_NEWS_RSS.format(query=quote_plus(query))
         try:
-            feed = feedparser.parse(url)
+            # Fetch with an explicit timeout; feedparser.parse(url) has none.
+            resp = requests.get(url, timeout=10, headers={"User-Agent": "CreatorIQ/1.0"})
+            resp.raise_for_status()
+            feed = feedparser.parse(resp.content)
         except Exception as exc:
-            logger.error("feedparser error: %s", exc)
+            logger.error("news RSS fetch error: %s", type(exc).__name__)
             return []
 
         articles: list[dict] = []
@@ -108,12 +97,8 @@ class NewsAnalyzer:
         Returns list of {title, summary, url, published, source, sentiment}.
         """
         if not _FEEDPARSER_AVAILABLE:
-            articles = _DEMO_ARTICLES[:max_articles]
-        else:
-            articles = self._fetch_rss(query, max_articles)
-            if not articles:
-                logger.info("No news results found — returning demo data.")
-                articles = _DEMO_ARTICLES[:max_articles]
+            return []
+        articles = self._fetch_rss(query, max_articles)
 
         # Attach sentiment to each article
         sa = _get_sa()
@@ -138,7 +123,10 @@ class NewsAnalyzer:
         """
         Fetch articles for `query` and return overall sentiment summary.
         """
-        articles = self.search_news(query, max_articles=20)
+        return self.summarize_sentiment(self.search_news(query, max_articles=20))
+
+    def summarize_sentiment(self, articles: list[dict]) -> dict:
+        """Overall sentiment summary for already-fetched articles."""
         sentiments = [a["sentiment"] for a in articles if "sentiment" in a]
 
         if not sentiments:
@@ -172,9 +160,8 @@ class NewsAnalyzer:
         """
         Return only articles published within the last `days` days.
         """
-        articles = self.search_news(query, max_articles=40)
-        recent = [a for a in articles if self._within_last_n_days(a.get("published", ""), days)]
-        if not recent:
-            # If nothing is recent (e.g., demo data), just return all
-            recent = articles[:10]
-        return recent
+        return self.filter_recent(self.search_news(query, max_articles=40), days)
+
+    def filter_recent(self, articles: list[dict], days: int = 7) -> list[dict]:
+        """Keep only already-fetched articles published within the last `days` days."""
+        return [a for a in articles if self._within_last_n_days(a.get("published", ""), days)]
