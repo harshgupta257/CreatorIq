@@ -81,10 +81,11 @@ export async function fetchPredictions(channelId: string): Promise<ApiResponse<P
 
 export async function fetchTrends(
   query: string,
-  channelId: string
+  channelId: string,
+  range: string
 ): Promise<ApiResponse<TrendsData>> {
   return get<TrendsData>(
-    `/api/trends?query=${encodeURIComponent(query)}&channel_id=${channelId}`,
-    40000
+    `/api/trends?query=${encodeURIComponent(query)}&channel_id=${channelId}&range=${encodeURIComponent(range)}`,
+    45000
   );
 }
