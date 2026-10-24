@@ -127,25 +127,40 @@ def tag_word_frequency(videos: list[dict], top_n: int = 25) -> list[dict]:
 # ══════════════════════════════════════════════════════════════════════════════
 class GoogleTrendsAnalyzer:
     """
-    Wraps pytrends with rate-limit handling and demo fallback.
+    Wraps pytrends with rate-limit handling.
     pytrends makes unauthenticated requests to trends.google.com — it can
     get temporarily blocked under heavy load; we retry with back-off.
     """
 
     _MAX_RETRIES = 3
     _BACKOFF_BASE = 5  # seconds
+    _INIT_RETRY_SECS = 60  # wait between attempts to create the client
 
     def __init__(self):
         self._pytrends = None
-        if _PYTRENDS_AVAILABLE:
-            try:
-                self._pytrends = TrendReq(hl="en-US", tz=0, timeout=(10, 30), retries=2)
-                logger.info("pytrends client ready.")
-            except Exception as exc:
-                logger.warning("pytrends init failed: %s", exc)
+        self._last_init_attempt = 0.0
+        self._init_client()
+
+    def _init_client(self) -> None:
+        """Create the pytrends client (it fetches Google cookies, so it can fail)."""
+        if not _PYTRENDS_AVAILABLE:
+            return
+        self._last_init_attempt = time.monotonic()
+        try:
+            self._pytrends = TrendReq(hl="en-US", tz=0, timeout=(10, 30), retries=2)
+            logger.info("pytrends client ready.")
+        except Exception as exc:
+            logger.warning("pytrends init failed: %s — will retry later.", exc)
 
     # ── internal ───────────────────────────────────────────────────────────────
     def _has_api(self) -> bool:
+        # This instance is shared for the life of the process, so a failed
+        # start must not disable Trends until the next restart: retry it.
+        if (
+            self._pytrends is None
+            and time.monotonic() - self._last_init_attempt >= self._INIT_RETRY_SECS
+        ):
+            self._init_client()
         return self._pytrends is not None
 
     def _safe_build_payload(self, keywords: list[str], timeframe: str):

@@ -1,21 +1,22 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useCreatorStore } from '@/lib/store';
 import { fetchTrends } from '@/lib/api';
+import { useChannelData } from '@/lib/useChannelData';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { ArrowRight } from 'lucide-react';
 
 export default function TrendsPage() {
   const { channel, channelId, trends, setTrends } = useCreatorStore();
+  const { error, retry } = useChannelData(
+    trends,
+    (id) => fetchTrends(channel?.title ?? '', id),
+    setTrends,
+  );
 
-  useEffect(() => {
-    if (channelId && !trends) {
-      fetchTrends(channel?.title ?? '', channelId).then(r => {
-        if (r.success) setTrends(r.data);
-      });
-    }
-  }, [channelId, trends, channel?.title, setTrends]);
+  if (!trends && error) return <ErrorState message={error} onRetry={retry} />;
 
   if (!trends) {
     return (
@@ -65,7 +66,12 @@ export default function TrendsPage() {
           {rate_limited ? (
             <div className="text-[11px] text-[#ffd700] flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#ffd700]" />
-              Rate limited — showing cached data
+              Google Trends is rate limiting requests. Try again later
+            </div>
+          ) : interest_over_time.length === 0 ? (
+            <div className="text-[11px] text-[#6a6aa8] flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#6a6aa8]" />
+              No Google Trends data for these keywords
             </div>
           ) : (
             <div className="text-[11px] text-[#00ff9f] flex items-center gap-1.5">
@@ -118,7 +124,11 @@ export default function TrendsPage() {
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-full flex items-center justify-center flex-wrap gap-2 px-8">
+            <div className="h-full flex flex-col items-center justify-center gap-3 px-8">
+              <p className="text-[12px] text-[#6a6aa8]">
+                Search interest unavailable. Topics from this channel&apos;s video tags:
+              </p>
+              <div className="flex items-center justify-center flex-wrap gap-2">
                {word_frequency.map((word, i) => (
                 <span
                   key={i}
@@ -127,7 +137,8 @@ export default function TrendsPage() {
                   {word.word} ({word.count})
                 </span>
               ))}
-              {word_frequency.length === 0 && <span className="text-[#6a6aa8] text-[12px]">No trend data available</span>}
+              {word_frequency.length === 0 && <span className="text-[#6a6aa8] text-[12px]">No video tags found</span>}
+              </div>
             </div>
           )}
         </div>

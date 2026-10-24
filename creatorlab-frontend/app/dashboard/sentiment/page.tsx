@@ -1,20 +1,22 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useCreatorStore } from '@/lib/store';
 import { fetchSentiment } from '@/lib/api';
+import { useChannelData } from '@/lib/useChannelData';
+import { ErrorState } from '@/components/ui/ErrorState';
+import type { SentimentBreakdown } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 export default function SentimentPage() {
   const { channel, channelId, sentiment, setSentiment } = useCreatorStore();
+  const { error, retry } = useChannelData(
+    sentiment,
+    (id) => fetchSentiment(id, channel?.title ?? ''),
+    setSentiment,
+  );
 
-  useEffect(() => {
-    if (channelId && !sentiment) {
-      fetchSentiment(channelId, channel?.title ?? '').then(r => {
-        if (r.success) setSentiment(r.data);
-      });
-    }
-  }, [channelId, sentiment, channel?.title, setSentiment]);
+  if (!sentiment && error) return <ErrorState message={error} onRetry={retry} />;
 
   if (!sentiment) {
     return (
@@ -29,6 +31,10 @@ export default function SentimentPage() {
     { name: 'Reddit Discussions', data: sentiment.reddit_sentiment, notConnected: !sentiment.reddit_connected },
     { name: 'News & Web', data: sentiment.news_sentiment },
   ];
+
+  // Per-source results carry average_compound; the combined one carries combined_compound
+  const scoreOf = (d?: SentimentBreakdown) =>
+    d && (d.sample_count ?? 1) > 0 ? d.average_compound ?? d.combined_compound : undefined;
 
   const getColor = (compound = 0) => {
     if (compound > 0.05) return 'text-[#00ff9f]';
@@ -58,13 +64,13 @@ export default function SentimentPage() {
             {src.notConnected ? (
               <div className="text-[28px] font-semibold text-[#6a6aa8] mt-2 mb-3">--</div>
             ) : (
-              <div className={`text-[28px] font-semibold mt-2 mb-3 ${getColor(src.data?.compound)}`}>
-                {src.data?.compound !== undefined ? Math.round(src.data.compound * 100) : '--'}
+              <div className={`text-[28px] font-semibold mt-2 mb-3 ${getColor(scoreOf(src.data))}`}>
+                {scoreOf(src.data) !== undefined ? Math.round(scoreOf(src.data)! * 100) : '--'}
               </div>
             )}
             
             <div className="flex w-full h-[3px] bg-[#1f1f3d] rounded-full overflow-hidden mb-1.5">
-              {!src.notConnected && src.data && (
+              {!src.notConnected && scoreOf(src.data) !== undefined && src.data && (
                 <>
                   <div style={{ width: `${src.data.positive_pct}%` }} className="bg-[#00ff9f] h-full" />
                   <div style={{ width: `${src.data.neutral_pct}%` }} className="bg-[#9aa4d6] h-full" />
@@ -74,13 +80,13 @@ export default function SentimentPage() {
             </div>
             <div className="flex justify-between text-[11px]">
               <span className={src.notConnected ? 'text-[#6a6aa8]' : 'text-[#00ff9f]'}>
-                {src.notConnected || !src.data ? '--%' : `${Math.round(src.data.positive_pct)}%`}
+                {src.notConnected || scoreOf(src.data) === undefined ? '--%' : `${Math.round(src.data.positive_pct)}%`}
               </span>
               <span className={src.notConnected ? 'text-[#6a6aa8]' : 'text-[#9aa4d6]'}>
-                {src.notConnected || !src.data ? '--%' : `${Math.round(src.data.neutral_pct)}%`}
+                {src.notConnected || scoreOf(src.data) === undefined ? '--%' : `${Math.round(src.data.neutral_pct)}%`}
               </span>
               <span className={src.notConnected ? 'text-[#6a6aa8]' : 'text-[#ff3864]'}>
-                {src.notConnected || !src.data ? '--%' : `${Math.round(src.data.negative_pct)}%`}
+                {src.notConnected || scoreOf(src.data) === undefined ? '--%' : `${Math.round(src.data.negative_pct)}%`}
               </span>
             </div>
           </div>
@@ -150,7 +156,7 @@ export default function SentimentPage() {
         <div className="w-full md:w-1/2 border-r border-[#2a2a5a]">
           <div className="px-5 py-3 border-b border-[#2a2a5a] text-[12px] text-[#9aa4d6]">Top Positive Comments</div>
           <div className="flex flex-col">
-            {sentiment.combined_sentiment?.top_positive_comments?.map((comment, i) => (
+            {sentiment.youtube_sentiment?.top_positive_comments?.map((comment, i) => (
               <div key={i} className="px-5 py-3 border-b border-[#2a2a5a] hover:bg-[#1a1a2e] transition-colors">
                 <div className="text-[13px] text-[#e6f7ff] line-clamp-2 mb-2 leading-relaxed">"{comment.text}"</div>
                 <div className="flex justify-between text-[11px] text-[#6a6aa8]">
@@ -162,7 +168,7 @@ export default function SentimentPage() {
                 </div>
               </div>
             ))}
-            {(!sentiment.combined_sentiment?.top_positive_comments || sentiment.combined_sentiment.top_positive_comments.length === 0) && (
+            {(!sentiment.youtube_sentiment?.top_positive_comments || sentiment.youtube_sentiment.top_positive_comments.length === 0) && (
               <div className="px-5 py-4 text-[12px] text-[#6a6aa8]">No positive comments found.</div>
             )}
           </div>
@@ -172,7 +178,7 @@ export default function SentimentPage() {
         <div className="w-full md:w-1/2">
           <div className="px-5 py-3 border-b border-[#2a2a5a] text-[12px] text-[#9aa4d6]">Top Critical Comments</div>
           <div className="flex flex-col">
-            {sentiment.combined_sentiment?.top_negative_comments?.map((comment, i) => (
+            {sentiment.youtube_sentiment?.top_negative_comments?.map((comment, i) => (
               <div key={i} className="px-5 py-3 border-b border-[#2a2a5a] hover:bg-[#1a1a2e] transition-colors">
                 <div className="text-[13px] text-[#e6f7ff] line-clamp-2 mb-2 leading-relaxed">"{comment.text}"</div>
                 <div className="flex justify-between text-[11px] text-[#6a6aa8]">
@@ -184,7 +190,7 @@ export default function SentimentPage() {
                 </div>
               </div>
             ))}
-            {(!sentiment.combined_sentiment?.top_negative_comments || sentiment.combined_sentiment.top_negative_comments.length === 0) && (
+            {(!sentiment.youtube_sentiment?.top_negative_comments || sentiment.youtube_sentiment.top_negative_comments.length === 0) && (
               <div className="px-5 py-4 text-[12px] text-[#6a6aa8]">No critical comments found.</div>
             )}
           </div>

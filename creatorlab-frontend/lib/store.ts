@@ -11,6 +11,8 @@ import type {
   DateRange,
 } from './types';
 
+export type BackendStatus = 'connecting' | 'online' | 'offline';
+
 interface CreatorStore {
   // Channel
   channelInput: string;
@@ -27,7 +29,7 @@ interface CreatorStore {
   // UI state
   isAnalyzing: boolean;
   instagramConnected: boolean;
-  backendOnline: boolean;
+  backendStatus: BackendStatus;
   dateRange: DateRange;
   dataLoadedAt: number | null;
 
@@ -42,7 +44,7 @@ interface CreatorStore {
   addCompetitor: (c: CompetitorData) => void;
   removeCompetitor: (id: string) => void;
   setIsAnalyzing: (b: boolean) => void;
-  setBackendOnline: (b: boolean) => void;
+  setBackendStatus: (s: BackendStatus) => void;
   setDateRange: (r: DateRange) => void;
   reset: () => void;
 }
@@ -58,7 +60,7 @@ const initialState = {
   competitors: [],
   isAnalyzing: false,
   instagramConnected: false,
-  backendOnline: false,
+  backendStatus: 'connecting' as BackendStatus,
   dateRange: '30D' as DateRange,
   dataLoadedAt: null,
 };
@@ -69,12 +71,21 @@ export const useCreatorStore = create<CreatorStore>()(
       ...initialState,
 
       setChannelInput: (input) => set({ channelInput: input }),
-      // Real data arriving from the backend proves it is online
-      setChannel: (ch) => set({ channel: ch, channelId: ch.channel_id, backendOnline: true }),
-      setVideos: (v) => set({ videos: v, backendOnline: true }),
-      setSentiment: (s) => set({ sentiment: s, backendOnline: true }),
-      setPredictions: (p) => set({ predictions: p, backendOnline: true }),
-      setTrends: (t) => set({ trends: t, backendOnline: true }),
+      // Real data arriving from the backend proves it is online.
+      // A different channel drops the previous channel's results.
+      setChannel: (ch) =>
+        set((state) => ({
+          channel: ch,
+          channelId: ch.channel_id,
+          backendStatus: 'online',
+          ...(state.channelId !== ch.channel_id
+            ? { videos: [], sentiment: null, predictions: null, trends: null }
+            : {}),
+        })),
+      setVideos: (v) => set({ videos: v, backendStatus: 'online' }),
+      setSentiment: (s) => set({ sentiment: s, backendStatus: 'online' }),
+      setPredictions: (p) => set({ predictions: p, backendStatus: 'online' }),
+      setTrends: (t) => set({ trends: t, backendStatus: 'online' }),
       setCompetitors: (c) => set({ competitors: c }),
       addCompetitor: (c) =>
         set((state) => ({
@@ -86,7 +97,7 @@ export const useCreatorStore = create<CreatorStore>()(
       removeCompetitor: (id) =>
         set((state) => ({ competitors: state.competitors.filter((c) => c.channel_id !== id) })),
       setIsAnalyzing: (b) => set({ isAnalyzing: b }),
-      setBackendOnline: (b) => set({ backendOnline: b }),
+      setBackendStatus: (s) => set({ backendStatus: s }),
       setDateRange: (r) => set({ dateRange: r }),
       reset: () => set(initialState),
     }),

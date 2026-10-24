@@ -95,10 +95,11 @@ interface SentimentOverviewProps {
 export function SentimentOverview({ sentiment }: SentimentOverviewProps) {
   const combined = sentiment?.combined_sentiment;
 
+  // The backend already sends percentages (0-100)
   const bars = [
-    { label: 'Positive', pct: combined ? Math.round(combined.positive_pct * 100) : 0, color: '#00ff9f' },
-    { label: 'Neutral',  pct: combined ? Math.round(combined.neutral_pct * 100)  : 0, color: '#9aa4d6' },
-    { label: 'Negative', pct: combined ? Math.round(combined.negative_pct * 100) : 0, color: '#ff3864' },
+    { label: 'Positive', pct: combined ? Math.round(combined.positive_pct) : 0, color: '#00ff9f' },
+    { label: 'Neutral',  pct: combined ? Math.round(combined.neutral_pct)  : 0, color: '#9aa4d6' },
+    { label: 'Negative', pct: combined ? Math.round(combined.negative_pct) : 0, color: '#ff3864' },
   ];
 
   return (

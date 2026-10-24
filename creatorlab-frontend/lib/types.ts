@@ -48,8 +48,12 @@ export interface SentimentBreakdown {
   positive_pct: number;
   neutral_pct: number;
   negative_pct: number;
-  compound?: number;
-  label?: string;
+  /** Per-source score (-1..1) */
+  average_compound?: number;
+  /** Score of the weighted combination of sources (-1..1) */
+  combined_compound?: number;
+  overall_label?: string;
+  sample_count?: number;
   top_positive_comments?: CommentData[];
   top_negative_comments?: CommentData[];
 }

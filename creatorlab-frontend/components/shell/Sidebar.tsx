@@ -24,7 +24,12 @@ const systemLinks = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const backendOnline = useCreatorStore((s) => s.backendOnline);
+  const backendStatus = useCreatorStore((s) => s.backendStatus);
+  const status = {
+    connecting: { color: '#ffd700', label: 'Connecting…' },
+    online:     { color: '#00ff9f', label: 'Live data' },
+    offline:    { color: '#ff3864', label: 'Offline' },
+  }[backendStatus];
 
   function navItem(href: string, name: string, Icon: React.ElementType, badge?: string) {
     const isActive = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href));
@@ -77,10 +82,10 @@ export function Sidebar() {
       <div className="border-t border-[#2a2a5a] px-4 py-2.5 flex items-center gap-2">
         <div
           className="w-1.5 h-1.5 rounded-full"
-          style={{ backgroundColor: backendOnline ? '#00ff9f' : '#ff3864', boxShadow: `0 0 6px ${backendOnline ? '#00ff9f' : '#ff3864'}` }}
+          style={{ backgroundColor: status.color, boxShadow: `0 0 6px ${status.color}` }}
         />
         <span className="text-[11px] text-[#6a6aa8]">
-          {backendOnline ? 'Live data' : 'Demo mode'}
+          {status.label}
         </span>
       </div>
     </aside>
