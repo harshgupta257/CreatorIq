@@ -29,9 +29,13 @@ export function Header() {
 
   // Health check on mount
   useEffect(() => {
+    // Only ever flip to live here: a slow or failed check must not override
+    // real data that has already loaded (the store starts offline).
     checkHealth()
-      .then((r) => store.setBackendOnline(r.success && r.data?.status === 'ok'))
-      .catch(() => store.setBackendOnline(false));
+      .then((r) => {
+        if (r.success && ['healthy', 'ok'].includes(r.data?.status ?? '')) store.setBackendOnline(true);
+      })
+      .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

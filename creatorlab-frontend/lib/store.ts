@@ -69,11 +69,12 @@ export const useCreatorStore = create<CreatorStore>()(
       ...initialState,
 
       setChannelInput: (input) => set({ channelInput: input }),
-      setChannel: (ch) => set({ channel: ch, channelId: ch.channel_id }),
-      setVideos: (v) => set({ videos: v }),
-      setSentiment: (s) => set({ sentiment: s }),
-      setPredictions: (p) => set({ predictions: p }),
-      setTrends: (t) => set({ trends: t }),
+      // Real data arriving from the backend proves it is online
+      setChannel: (ch) => set({ channel: ch, channelId: ch.channel_id, backendOnline: true }),
+      setVideos: (v) => set({ videos: v, backendOnline: true }),
+      setSentiment: (s) => set({ sentiment: s, backendOnline: true }),
+      setPredictions: (p) => set({ predictions: p, backendOnline: true }),
+      setTrends: (t) => set({ trends: t, backendOnline: true }),
       setCompetitors: (c) => set({ competitors: c }),
       addCompetitor: (c) =>
         set((state) => ({

@@ -23,7 +23,8 @@ async function get<T>(path: string, timeoutMs = 20000): Promise<ApiResponse<T>> 
 }
 
 export async function checkHealth(): Promise<ApiResponse<HealthData>> {
-  return get<HealthData>('/api/health', 4000);
+  // Long timeout: the free-tier backend can take ~30s to wake up
+  return get<HealthData>('/api/health', 60000);
 }
 
 export async function fetchChannel(url: string): Promise<ApiResponse<ChannelData>> {
