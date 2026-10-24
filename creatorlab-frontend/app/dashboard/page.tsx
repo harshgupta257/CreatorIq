@@ -26,7 +26,22 @@ function InsightRow({ color, text, badge }: { color: string; text: string; badge
 }
 
 export default function DashboardPage() {
-  const { channel, videos, sentiment, predictions, isAnalyzing } = useCreatorStore();
+  const { channel, videos, sentiment, predictions, trends, isAnalyzing } = useCreatorStore();
+
+  // Source status reflects what each source actually returned (grey = not checked yet)
+  const GREY = '#6a6aa8', GREEN = '#00ff9f', AMBER = '#ffd700';
+  const trendsStatus = !trends
+    ? { color: GREY, label: 'Google Trends' }
+    : trends.interest_over_time.length > 0
+      ? { color: GREEN, label: 'Google Trends' }
+      : trends.rate_limited
+        ? { color: AMBER, label: 'Google Trends (rate limited)' }
+        : { color: GREY, label: 'Google Trends (no data)' };
+  const newsStatus = !sentiment
+    ? { color: GREY, label: 'News' }
+    : (sentiment.news_sentiment?.sample_count ?? 0) > 0
+      ? { color: GREEN, label: 'News' }
+      : { color: GREY, label: 'News (no articles found)' };
 
   // Compute metrics
   const avgEngagement =
@@ -107,13 +122,13 @@ export default function DashboardPage() {
 
       {/* ── Data Sources Status ── */}
       <div className="flex flex-wrap items-center gap-5 px-5 py-3 border-b border-[#2a2a5a]">
-        <StatusDot color="#00ff9f" label="YouTube" />
+        <StatusDot color={channel ? GREEN : GREY} label="YouTube" />
         <StatusDot
-          color={sentiment?.reddit_connected ? '#00ff9f' : '#6a6aa8'}
-          label={`Reddit${sentiment?.reddit_connected ? '' : ' (not configured)'}`}
+          color={sentiment?.reddit_connected ? GREEN : GREY}
+          label={`Reddit${sentiment && !sentiment.reddit_connected ? ' (not configured)' : ''}`}
         />
-        <StatusDot color="#00ff9f" label="Google Trends" />
-        <StatusDot color="#00ff9f" label="News" />
+        <StatusDot color={trendsStatus.color} label={trendsStatus.label} />
+        <StatusDot color={newsStatus.color} label={newsStatus.label} />
         <StatusDot color="#6a6aa8" label="Instagram (coming soon)" />
       </div>
 

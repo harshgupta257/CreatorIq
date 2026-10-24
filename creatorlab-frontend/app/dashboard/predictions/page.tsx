@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useCreatorStore } from '@/lib/store';
 import { fetchPredictions } from '@/lib/api';
+import { useChannelData } from '@/lib/useChannelData';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { formatNumber, cn } from '@/lib/utils';
 import { ForecastChart } from '@/components/predictions/ForecastChart';
 import { TopicBar } from '@/components/predictions/TopicBar';
@@ -11,14 +13,7 @@ import { VideoTable } from '@/components/predictions/VideoTable';
 
 export default function PredictionsPage() {
   const { channelId, predictions, setPredictions } = useCreatorStore();
-
-  useEffect(() => {
-    if (channelId && !predictions) {
-      fetchPredictions(channelId).then((r) => {
-        if (r.success) setPredictions(r.data);
-      });
-    }
-  }, [channelId, predictions, setPredictions]);
+  const { error, retry } = useChannelData(predictions, fetchPredictions, setPredictions);
 
   if (!channelId) {
     return (
@@ -27,6 +22,8 @@ export default function PredictionsPage() {
       </div>
     );
   }
+
+  if (!predictions && error) return <ErrorState message={error} onRetry={retry} />;
 
   if (!predictions) {
     return (

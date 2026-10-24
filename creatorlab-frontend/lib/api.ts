@@ -10,13 +10,43 @@ import type {
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
 
+export class ApiError extends Error {
+  constructor(message: string, readonly kind: 'network' | 'timeout' | 'server') {
+    super(message);
+  }
+}
+
+/** True when the backend could not be reached at all. */
+export function isNetworkError(e: unknown): boolean {
+  return e instanceof ApiError && e.kind === 'network';
+}
+
+/** A message that is safe and useful to show the user. */
+export function errorMessage(e: unknown): string {
+  return e instanceof ApiError ? e.message : 'Something went wrong. Please try again.';
+}
+
+/**
+ * GET a backend endpoint. Backend errors come back as `{ success: false, error }`
+ * so callers can show the server's message; only network failures, timeouts
+ * and non-JSON responses throw an ApiError.
+ */
 async function get<T>(path: string, timeoutMs = 20000): Promise<ApiResponse<T>> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(`${BASE}${path}`, { signal: controller.signal, cache: 'no-store' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
+    let res: Response;
+    try {
+      res = await fetch(`${BASE}${path}`, { signal: controller.signal, cache: 'no-store' });
+    } catch {
+      if (controller.signal.aborted) {
+        throw new ApiError('The request timed out. The server may be waking up, so try again in a moment.', 'timeout');
+      }
+      throw new ApiError("Can't reach the CreatorIQ server. Check your connection and try again.", 'network');
+    }
+    const body = await res.json().catch(() => null);
+    if (body && typeof body.success === 'boolean') return body as ApiResponse<T>;
+    throw new ApiError(`The server returned an unexpected response (HTTP ${res.status}).`, 'server');
   } finally {
     clearTimeout(timer);
   }
