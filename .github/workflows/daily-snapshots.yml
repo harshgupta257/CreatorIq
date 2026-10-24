@@ -1,0 +1,42 @@
+# Records a daily snapshot (subscribers, views, videos) for every channel
+# analyzed in the last 30 days, so the Performance Insights growth chart has
+# a data point every day — even on days nobody opens the app.
+#
+# Setup (optional): add two repository secrets
+#   CREATORIQ_API_URL       e.g. https://creatoriq-backend-986h.onrender.com
+#   SNAPSHOT_REFRESH_TOKEN  any long random string; set the same value as an
+#                           environment variable on the backend (Render)
+# Until both are set, this workflow does nothing.
+name: Daily channel snapshots
+
+on:
+  schedule:
+    - cron: "17 3 * * *"   # 03:17 UTC daily
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Refresh snapshots
+        env:
+          API_URL: ${{ secrets.CREATORIQ_API_URL }}
+          TOKEN: ${{ secrets.SNAPSHOT_REFRESH_TOKEN }}
+        run: |
+          if [ -z "$API_URL" ] || [ -z "$TOKEN" ]; then
+            echo "Snapshot refresh is not configured (secrets missing); skipping."
+            exit 0
+          fi
+          # The free backend may be asleep; give it time to wake up and retry
+          for attempt in 1 2 3; do
+            if curl -fsS --max-time 120 -X POST "$API_URL/api/snapshots/refresh" \
+                 -H "X-Refresh-Token: $TOKEN"; then
+              echo; exit 0
+            fi
+            echo "Attempt $attempt failed; retrying in 30s"
+            sleep 30
+          done
+          exit 1

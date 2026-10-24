@@ -4,6 +4,12 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  async redirects() {
+    return [
+      // The Predictions page was replaced by Performance Insights
+      { source: "/dashboard/predictions", destination: "/dashboard/insights", permanent: true },
+    ];
+  },
   async rewrites() {
     return [
       {

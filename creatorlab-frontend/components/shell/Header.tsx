@@ -11,7 +11,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard':             'Overview',
   '/dashboard/youtube':     'YouTube Analytics',
   '/dashboard/sentiment':   'Audience Sentiment',
-  '/dashboard/predictions': 'Growth Predictions',
+  '/dashboard/insights':    'Performance Insights',
   '/dashboard/trends':      'Market Trends',
   '/dashboard/competitor':  'Competitor Intelligence',
   '/dashboard/instagram':   'Instagram',

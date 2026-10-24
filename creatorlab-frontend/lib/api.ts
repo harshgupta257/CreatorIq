@@ -3,7 +3,7 @@ import type {
   ChannelData,
   VideosResponse,
   SentimentData,
-  PredictionsData,
+  InsightsData,
   TrendsData,
   HealthData,
 } from './types';
@@ -75,8 +75,11 @@ export async function fetchSentiment(
   );
 }
 
-export async function fetchPredictions(channelId: string): Promise<ApiResponse<PredictionsData>> {
-  return get<PredictionsData>(`/api/predictions?channel_id=${channelId}`, 25000);
+export async function fetchInsights(channelId: string, timeZone: string): Promise<ApiResponse<InsightsData>> {
+  return get<InsightsData>(
+    `/api/insights?channel_id=${channelId}&tz=${encodeURIComponent(timeZone)}`,
+    45000
+  );
 }
 
 export async function fetchTrends(

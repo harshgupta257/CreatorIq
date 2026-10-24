@@ -116,7 +116,7 @@ const FOOTER_COLUMNS = [
     title: 'Product',
     links: [
       { label: 'Dashboard', href: '/dashboard' },
-      { label: 'Growth Predictions', href: '/dashboard/predictions' },
+      { label: 'Performance Insights', href: '/dashboard/insights' },
       { label: 'Sentiment Analysis', href: '/dashboard/sentiment' },
       { label: 'Competitor Intel', href: '/dashboard/competitor' },
     ],

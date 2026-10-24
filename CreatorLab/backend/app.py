@@ -28,6 +28,8 @@ from reddit_api import RedditSentimentCollector
 from sentiment_analysis import SentimentAnalyzer
 from google_trends import GoogleTrendsAnalyzer, extract_topic_phrases, tag_word_frequency, find_content_gaps
 import shared_store
+import performance
+import snapshots
 from news_scraper import NewsAnalyzer
 from ml_models import EngagementPredictor
 from instagram_api import InstagramAnalyzer
@@ -164,6 +166,7 @@ def youtube_channel():
         info = yt.get_channel_info(url)
         if info is None:
             return error_response("Channel not found or API key missing.", 404)
+        snapshots.record(info)
         return ok_response(info)
     except Exception as exc:
         return server_error(exc, "youtube_channel")
@@ -480,6 +483,63 @@ def combined_sentiment():
     except Exception as exc:
         return server_error(exc, "combined_sentiment")
 
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  PERFORMANCE INSIGHTS
+# ══════════════════════════════════════════════════════════════════════════════
+_INSIGHTS_VIDEOS = 150   # uploads-playlist pages are cheap (~2 units per 50 videos)
+
+
+@app.route("/api/insights", methods=["GET"])
+def performance_insights():
+    """
+    GET /api/insights?channel_id=<id>&tz=<IANA timezone>
+    Age-adjusted performance analysis, a validated "what drives views" model,
+    and the channel's recorded growth history.
+    """
+    channel_id = request.args.get("channel_id", "").strip()
+    tz = request.args.get("tz", "UTC").strip()[:64]
+    if not channel_id:
+        return error_response("Query param 'channel_id' is required.")
+    try:
+        yt = _yt()
+        videos = yt.get_channel_videos(channel_id, max_results=_INSIGHTS_VIDEOS)
+        channel_info = yt.get_channel_info(channel_id) or {}
+        snapshots.record(channel_info)
+
+        result = performance.analyze(videos, tz=tz)
+        history = snapshots.history(channel_id)
+        result["growth"] = {
+            "storage":        snapshots.storage_kind(),
+            "history":        history,
+            "tracking_since": history[0]["date"] if history else None,
+        }
+        result["channel_id"] = channel_id
+        return ok_response(result)
+    except Exception as exc:
+        return server_error(exc, "performance_insights")
+
+
+@app.route("/api/snapshots/refresh", methods=["POST"])
+def refresh_snapshots():
+    """
+    POST /api/snapshots/refresh  (header X-Refresh-Token: <SNAPSHOT_REFRESH_TOKEN>)
+    Records today's snapshot for every channel analyzed in the last 30 days.
+    Meant for a daily scheduled job; disabled unless SNAPSHOT_REFRESH_TOKEN is set.
+    """
+    expected = os.getenv("SNAPSHOT_REFRESH_TOKEN", "")
+    if not expected:
+        return error_response("Endpoint not found.", 404)
+    if not secrets.compare_digest(request.headers.get("X-Refresh-Token", ""), expected):
+        return error_response("Invalid refresh token.", 403)
+    try:
+        ids = snapshots.tracked_channel_ids()
+        channels = _yt().get_channels_by_ids(ids) if ids else []
+        saved = sum(1 for ch in channels if snapshots.record(ch))
+        return ok_response({"tracked": len(ids), "recorded": saved, "storage": snapshots.storage_kind()})
+    except Exception as exc:
+        return server_error(exc, "refresh_snapshots")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
