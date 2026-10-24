@@ -26,7 +26,7 @@ function InsightRow({ color, text, badge }: { color: string; text: string; badge
 }
 
 export default function DashboardPage() {
-  const { channel, videos, sentiment, predictions, trends, isAnalyzing } = useCreatorStore();
+  const { channel, videos, sentiment, insights, trends, isAnalyzing } = useCreatorStore();
 
   // Source status reflects what each source actually returned (grey = not checked yet)
   const GREY = '#6a6aa8', GREEN = '#00ff9f', AMBER = '#ffd700';
@@ -135,36 +135,36 @@ export default function DashboardPage() {
       {/* ── Intelligence Insights ── */}
       <div className="px-5 py-4">
         <h2 className="text-[12px] font-medium text-[#9aa4d6] mb-3">Intelligence Insights</h2>
-        {predictions ? (
+        {insights?.status === 'ok' ? (
           <>
-            <InsightRow
-              color="#ff006e"
-              text={`Viral score: ${predictions.viral_potential_score.label} — ${predictions.viral_potential_score.score}/100`}
-              badge="Viral Score"
-            />
-            <InsightRow
-              color="#00ff9f"
-              text={`Best upload day: ${predictions.recommended_posting_time.best_day} at ${predictions.recommended_posting_time.best_hour_utc}:00 UTC`}
-              badge="Optimization"
-            />
-            {predictions.topic_performance[0] && (
+            {insights.expected_next?.[0] && (
               <InsightRow
-                color="#ffd700"
-                text={`Top performing topic: "${predictions.topic_performance[0].topic}" — avg ${formatCompact(predictions.topic_performance[0].avg_views)} views`}
-                badge="Content Strategy"
+                color="#00ffff"
+                text={`Next ${insights.expected_next[0].format === 'short' ? 'Short' : 'video'}: likely ${formatCompact(insights.expected_next[0].low)}–${formatCompact(insights.expected_next[0].high)} views after ${insights.expected_next[0].days} days`}
+                badge="Expected Views"
               />
             )}
-            {predictions.duration_sweet_spot && (
+            {insights.momentum && (
               <InsightRow
-                color="#ff006e"
-                text={`${predictions.duration_sweet_spot.recommendation}`}
-                badge="Duration"
+                color={insights.momentum.verdict === 'improving' ? '#00ff9f' : insights.momentum.verdict === 'declining' ? '#ff3864' : '#9aa4d6'}
+                text={
+                  insights.momentum.verdict === 'steady'
+                    ? `Recent videos are performing in line with your earlier ones`
+                    : `Recent videos are ${insights.momentum.verdict}: ${insights.momentum.change}× your earlier ones`
+                }
+                badge="Momentum"
               />
             )}
+            {insights.what_works?.factors.filter((f) => f.verdict === 'clear').slice(0, 2).map((f) => (
+              <InsightRow key={f.key} color="#ffd700" text={`${f.name}: ${f.best} does best (${f.effect}× the others)`} badge="What Works" />
+            ))}
+            {insights.what_works?.topics.filter((t) => t.verdict === 'clear' && t.effect > 1).slice(0, 1).map((t) => (
+              <InsightRow key={t.topic} color="#ff006e" text={`Videos tagged "${t.topic}" get ${t.effect}× your typical views`} badge="Topic" />
+            ))}
           </>
         ) : (
           <p className="text-[13px] text-[#6a6aa8]">
-            → Analyze a channel then visit Predictions for AI-powered insights
+            → Analyze a channel then open Performance Insights to see what works on your channel
           </p>
         )}
       </div>

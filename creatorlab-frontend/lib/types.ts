@@ -86,99 +86,145 @@ export interface SentimentData {
   sentiment_over_time: SentimentTimePoint[];
 }
 
-export interface ViralScore {
-  score: number;
+// ── Performance Insights ──────────────────────────────────────────────────────
+// "ratio" everywhere = a video's views ÷ the channel's typical video of the same
+// age and format (1.0 = typical, 2.0 = twice the usual views).
+
+export type Verdict = 'clear' | 'none' | 'insufficient';
+
+export interface ExpectedViews {
+  format: 'long' | 'short';
   label: string;
-  limited_data?: boolean;
+  days: number;
+  low: number;
+  typical: number;
+  high: number;
+  based_on: number;
 }
 
-export interface PostingTimeData {
-  best_day: string;
-  best_day_idx: number;
-  best_hour_utc: number;
-  based_on_videos: number;
-  heatmap: Record<string, number>;
+export interface MomentumPoint {
+  date: string;
+  video_id: string;
+  title: string;
+  ratio: number;
+  /** Rolling median of 5 videos */
+  trend: number;
+  format: 'long' | 'short';
 }
 
-export interface TitleWord {
-  word: string;
-  avg_views: number;
-  count: number;
+export interface Momentum {
+  verdict: 'improving' | 'declining' | 'steady';
+  change: number;
+  recent_count: number;
+  earlier_count: number;
+  p_value: number;
+  series: MomentumPoint[];
 }
 
-export interface TitlePatternInsights {
-  best_length_bucket: string;
-  numbers_boost_pct: number;
-  questions_boost_pct: number;
-  has_colon_boost_pct: number;
-  top_title_words: TitleWord[];
-  best_example: { title: string; views: number };
-  limited_data?: boolean;
-}
-
-export interface TopicPerformanceItem {
-  topic: string;
-  avg_views: number;
-  video_count: number;
-}
-
-export interface DurationSweetSpot {
-  best_range: string;
-  recommendation: string;
-}
-
-export interface GrowthForecastPoint {
-  week: number;
-  cum_views: number;
-}
-
-export interface ForecastPoint {
-  label: string;
-  predicted_cum_views: number;
-}
-
-export interface GrowthForecast {
-  slope_views_week: number;
-  r2?: number;
-  historical: GrowthForecastPoint[];
-  forecast_points: ForecastPoint[];
-}
-
-export interface VideoPrediction {
+export interface OutlierVideo {
   video_id: string;
   title: string;
   thumbnail: string;
-  predicted_views: number;
-  actual_views: number;
-  confidence: number;
+  view_count: number;
+  ratio: number;
+  age_days: number;
+  format: 'long' | 'short';
 }
 
-export interface ContentRecommendation {
+export interface SharedTrait {
+  text: string;
+  kind: 'tag' | 'format' | 'length' | 'title';
+  top_count: number;
+  top_total: number;
+  /** % of the other videos that have it */
+  rest_share: number;
+}
+
+export interface FactorGroup {
+  label: string;
+  n: number;
+  median_ratio: number;
+}
+
+export interface Factor {
+  key: string;
+  name: string;
+  groups: FactorGroup[];
+  verdict: Verdict;
+  best: string | null;
+  effect: number | null;
+  /** False-discovery-rate adjusted */
+  p_value: number | null;
+}
+
+export interface TopicEffect {
   topic: string;
-  reason: string;
-  type: 'proven' | 'trending';
+  n: number;
+  effect: number;
+  verdict: Verdict;
+  p_value: number;
 }
 
-export interface TrainingResult {
-  status: 'trained' | 'heuristic';
-  r2_score?: number;
-  samples?: number;
+export interface HeatmapCell {
+  day: number;
+  block: number;
+  n: number;
+  median_ratio: number;
 }
 
-export interface PredictionsData {
+export interface ModelDriver {
+  label: string;
+  share: number;
+  direction: 'up' | 'down' | 'mixed';
+}
+
+export interface DriversModel {
+  status: 'reliable' | 'not_reliable' | 'insufficient_data';
+  n: number;
+  min_videos?: number;
+  improvement_pct?: number;
+  mae_model?: number;
+  mae_baseline?: number;
+  drivers?: ModelDriver[];
+}
+
+export interface GrowthSnapshot {
+  date: string;
+  subscribers: number;
+  views: number;
+  videos: number;
+}
+
+export interface InsightsData {
   channel_id: string;
-  video_count: number;
-  limited_data: boolean;
-  training_result: TrainingResult;
-  viral_potential_score: ViralScore;
-  recommended_posting_time: PostingTimeData;
-  title_pattern_insights: TitlePatternInsights;
-  topic_performance: TopicPerformanceItem[];
-  duration_sweet_spot: DurationSweetSpot;
-  growth_forecast: GrowthForecast;
-  video_predictions: VideoPrediction[];
-  recommended_topics: ContentRecommendation[];
-  feature_importance?: Record<string, number>;
+  status: 'ok' | 'insufficient_data';
+  timezone: string;
+  videos_fetched: number;
+  videos_scored: number;
+  min_videos: number;
+  long_count?: number;
+  short_count?: number;
+  min_age_days?: number;
+  expected_next?: ExpectedViews[];
+  momentum?: Momentum;
+  outliers?: {
+    top: OutlierVideo[];
+    bottom: OutlierVideo[];
+    top_share_traits: SharedTrait[];
+    top_group_size: number;
+  };
+  what_works?: {
+    factors: Factor[];
+    heatmap: HeatmapCell[];
+    time_blocks: string[];
+    topics: TopicEffect[];
+  };
+  model?: DriversModel;
+  growth: {
+    storage: 'database' | 'local_file';
+    history: GrowthSnapshot[];
+    tracking_since: string | null;
+  };
 }
 
 export interface TrendsDataPoint {
@@ -299,7 +345,7 @@ export type TabId =
   | 'overview'
   | 'youtube'
   | 'sentiment'
-  | 'predictions'
+  | 'insights'
   | 'trends'
   | 'competitor'
   | 'instagram'

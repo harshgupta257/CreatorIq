@@ -5,7 +5,7 @@ import './globals.css';
 
 const title = 'CreatorIQ — Creator Intelligence Platform';
 const description =
-  'Free, open-source analytics for YouTube creators: ML growth predictions, multi-source audience sentiment, competitor intelligence and Google Trends in one dashboard.';
+  'Free, open-source analytics for YouTube creators: ML performance insights, multi-source audience sentiment, competitor intelligence and Google Trends in one dashboard.';
 
 export const metadata: Metadata = {
   title,
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     'creator analytics',
     'YouTube analytics',
     'sentiment analysis',
-    'growth predictions',
+    'performance insights',
     'competitor intelligence',
     'Google Trends',
   ],

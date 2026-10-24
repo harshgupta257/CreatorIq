@@ -8,11 +8,18 @@ import {
 } from 'lucide-react';
 import { useCreatorStore } from '@/lib/store';
 
-const platformLinks = [
+interface NavLink {
+  name: string;
+  href: string;
+  icon: React.ElementType;
+  badge?: string;
+}
+
+const platformLinks: NavLink[] = [
   { name: 'Overview',     href: '/dashboard',             icon: LayoutDashboard },
   { name: 'YouTube',      href: '/dashboard/youtube',     icon: Play },
   { name: 'Sentiment',    href: '/dashboard/sentiment',   icon: MessageCircle },
-  { name: 'Predictions',  href: '/dashboard/predictions', icon: TrendingUp, badge: 'Beta' },
+  { name: 'Performance Insights', href: '/dashboard/insights', icon: TrendingUp },
   { name: 'Trends',       href: '/dashboard/trends',      icon: Activity },
   { name: 'Competitor',   href: '/dashboard/competitor',  icon: Target },
   { name: 'Instagram',    href: '/dashboard/instagram',   icon: Camera },

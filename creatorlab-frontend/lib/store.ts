@@ -5,7 +5,7 @@ import type {
   ChannelData,
   VideoData,
   SentimentData,
-  PredictionsData,
+  InsightsData,
   TrendsData,
   CompetitorData,
   DateRange,
@@ -22,7 +22,7 @@ interface CreatorStore {
   // Loaded data
   videos: VideoData[];
   sentiment: SentimentData | null;
-  predictions: PredictionsData | null;
+  insights: InsightsData | null;
   trends: TrendsData | null;
   competitors: CompetitorData[];
 
@@ -38,7 +38,7 @@ interface CreatorStore {
   setChannel: (ch: ChannelData) => void;
   setVideos: (v: VideoData[]) => void;
   setSentiment: (s: SentimentData) => void;
-  setPredictions: (p: PredictionsData) => void;
+  setInsights: (i: InsightsData) => void;
   setTrends: (t: TrendsData) => void;
   setCompetitors: (c: CompetitorData[]) => void;
   addCompetitor: (c: CompetitorData) => void;
@@ -55,7 +55,7 @@ const initialState = {
   channel: null,
   videos: [],
   sentiment: null,
-  predictions: null,
+  insights: null,
   trends: null,
   competitors: [],
   isAnalyzing: false,
@@ -79,12 +79,12 @@ export const useCreatorStore = create<CreatorStore>()(
           channelId: ch.channel_id,
           backendStatus: 'online',
           ...(state.channelId !== ch.channel_id
-            ? { videos: [], sentiment: null, predictions: null, trends: null }
+            ? { videos: [], sentiment: null, insights: null, trends: null }
             : {}),
         })),
       setVideos: (v) => set({ videos: v, backendStatus: 'online' }),
       setSentiment: (s) => set({ sentiment: s, backendStatus: 'online' }),
-      setPredictions: (p) => set({ predictions: p, backendStatus: 'online' }),
+      setInsights: (i) => set({ insights: i, backendStatus: 'online' }),
       setTrends: (t) => set({ trends: t, backendStatus: 'online' }),
       setCompetitors: (c) => set({ competitors: c }),
       addCompetitor: (c) =>

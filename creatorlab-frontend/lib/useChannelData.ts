@@ -6,7 +6,7 @@ import { errorMessage, isNetworkError } from './api';
 import type { ApiResponse } from './types';
 
 /**
- * Loads one channel-level dataset (sentiment, predictions, trends) when it is
+ * Loads one channel-level dataset (sentiment, insights, trends) when it is
  * missing. Responses that arrive after the user switched channels are dropped,
  * and failures are returned as a message with a retry callback.
  */

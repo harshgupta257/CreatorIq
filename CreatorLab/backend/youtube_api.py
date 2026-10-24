@@ -187,6 +187,20 @@ class YouTubeAnalyzer:
         items = data.get("items", [])
         return self._parse_channel(items[0]) if items else None
 
+    def get_channels_by_ids(self, channel_ids: list[str]) -> list[dict]:
+        """Channel stats for many channels: 50 per request, 1 quota unit each."""
+        if not self.api_key:
+            return []
+        out = []
+        for i in range(0, len(channel_ids), 50):
+            data = self._get("channels", {
+                "part": "snippet,statistics",
+                "id": ",".join(channel_ids[i:i + 50]),
+                "maxResults": 50,
+            })
+            out.extend(self._parse_channel(item) for item in data.get("items", []))
+        return out
+
     def _channel_by_handle(self, handle: str) -> dict | None:
         try:
             data = self._get("channels", {
