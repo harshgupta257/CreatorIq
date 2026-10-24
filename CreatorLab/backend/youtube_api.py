@@ -8,12 +8,14 @@ import re
 import time
 import logging
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 from urllib.parse import urlparse
 
 import requests
 from dotenv import load_dotenv
+
+import shared_store
 
 load_dotenv()
 logger = logging.getLogger("creatoriq.youtube")
@@ -25,6 +27,25 @@ _CACHE_TTL_SECS = 600
 _MIN_FETCH = 50   # always fetch a full page; it costs the same quota as fewer
 _video_cache: dict[str, tuple[float, int, list]] = {}
 _cache_lock = threading.Lock()
+
+
+# Standard YouTube video category IDs → names (stable; avoids an API call)
+CATEGORY_NAMES = {
+    "1": "Film & Animation", "2": "Autos & Vehicles", "10": "Music",
+    "15": "Pets & Animals", "17": "Sports", "19": "Travel & Events",
+    "20": "Gaming", "22": "People & Blogs", "23": "Comedy",
+    "24": "Entertainment", "25": "News & Politics", "26": "Howto & Style",
+    "27": "Education", "28": "Science & Technology", "29": "Nonprofits & Activism",
+}
+
+# Search costs 100 units + 1 for the stats lookup
+_SEARCH_COST = 101
+_TRENDING_TTL_SECS = 3600
+_NICHE_TTL_SECS = 6 * 3600
+
+
+class QuotaCapReached(Exception):
+    """The app's own daily budget for niche searches is used up."""
 
 
 class YouTubeAPIError(Exception):
@@ -308,6 +329,7 @@ class YouTubeAnalyzer:
                                           sn.get("thumbnails", {}).get("medium") or
                                           {}).get("url", ""),
                         "tags":          sn.get("tags", []),
+                        "category_id":   sn.get("categoryId", ""),
                         "description":   sn.get("description", "")[:300],
                     })
 
@@ -317,6 +339,99 @@ class YouTubeAnalyzer:
 
         videos.sort(key=lambda v: v.get("published_at", ""), reverse=True)
         return videos[:max_results]
+
+    @staticmethod
+    def _brief_video(v: dict) -> dict:
+        sn = v.get("snippet", {})
+        st = v.get("statistics", {})
+        return {
+            "video_id":      v["id"],
+            "title":         sn.get("title", ""),
+            "channel_id":    sn.get("channelId", ""),
+            "channel_title": sn.get("channelTitle", ""),
+            "published_at":  sn.get("publishedAt", ""),
+            "view_count":    int(st.get("viewCount", 0)),
+            "like_count":    int(st.get("likeCount", 0)),
+            "thumbnail":     (sn.get("thumbnails", {}).get("medium") or
+                              sn.get("thumbnails", {}).get("default") or
+                              {}).get("url", ""),
+            "tags":          sn.get("tags", []),
+        }
+
+    def get_trending_videos(self, region: str, category_id: str = "", max_results: int = 10) -> dict:
+        """
+        Most popular videos right now in a region, optionally within a category
+        (1 quota unit, cached for an hour). Some categories have no chart in
+        some regions; then the region-wide chart is returned.
+        """
+        if not self.api_key:
+            return {"region": region, "category_id": "", "videos": []}
+        region = (region or "US").upper()
+        key = f"{region}:{category_id}:{max_results}"
+        cached = shared_store.cache_get("yt-trending", key, _TRENDING_TTL_SECS)
+        if cached is not None:
+            return cached
+
+        params = {"part": "snippet,statistics", "chart": "mostPopular",
+                  "regionCode": region, "maxResults": max_results}
+        used_category = ""
+        data = None
+        if category_id:
+            try:
+                data = self._get("videos", {**params, "videoCategoryId": category_id})
+                used_category = category_id
+            except YouTubeAPIError as exc:
+                if exc.status == 429:
+                    raise
+                logger.info("No trending chart for category %s in %s; using region chart.", category_id, region)
+        if data is None:
+            data = self._get("videos", params)
+
+        result = {
+            "region":      region,
+            "category_id": used_category,
+            "videos":      [self._brief_video(v) for v in data.get("items", [])],
+        }
+        shared_store.cache_set("yt-trending", key, result)
+        return result
+
+    def search_recent_videos(
+        self, query: str, days: int = 14, max_results: int = 8, daily_cap: int = 6000
+    ) -> list:
+        """
+        Most-viewed videos published in the last `days` days for `query`.
+        Costs 101 quota units, so results are cached for 6 hours and every
+        uncached search is charged to an app-wide daily budget (`daily_cap`).
+        Raises QuotaCapReached when that budget is used up.
+        """
+        if not self.api_key:
+            return []
+        norm = " ".join(query.lower().split())
+        key = f"{norm}:{days}:{max_results}"
+        cached = shared_store.cache_get("yt-niche", key, _NICHE_TTL_SECS)
+        if cached is not None:
+            return cached
+
+        if not shared_store.quota_try_spend("niche_search", _SEARCH_COST, daily_cap):
+            raise QuotaCapReached()
+
+        after = datetime.now(timezone.utc) - timedelta(days=days)
+        data = self._get("search", {
+            "part": "snippet",
+            "q": norm,
+            "type": "video",
+            "order": "viewCount",
+            "publishedAfter": after.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "maxResults": max_results,
+        })
+        ids = [i["id"]["videoId"] for i in data.get("items", []) if i.get("id", {}).get("videoId")]
+        videos = []
+        if ids:
+            stats = self._get("videos", {"part": "snippet,statistics", "id": ",".join(ids)})
+            videos = [self._brief_video(v) for v in stats.get("items", [])]
+            videos.sort(key=lambda v: v["view_count"], reverse=True)
+        shared_store.cache_set("yt-niche", key, videos)
+        return videos
 
     def get_video_comments(self, video_id: str, max_results: int = 100) -> list:
         """Return top comments for a video (plain text, no HTML)."""

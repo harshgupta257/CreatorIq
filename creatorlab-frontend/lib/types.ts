@@ -189,17 +189,71 @@ export interface TrendsDataPoint {
 export interface RelatedQuery {
   query: string;
   value: number | string;
+  /** The topic phrase this query is related to */
+  keyword?: string;
 }
 
+export interface TrendVideo {
+  video_id: string;
+  title: string;
+  channel_id: string;
+  channel_title: string;
+  published_at: string;
+  view_count: number;
+  like_count: number;
+  thumbnail: string;
+}
+
+export interface GeoInterest {
+  country: string;
+  /** ISO 3166 alpha-2 code, used for the flag */
+  code: string;
+  value: number;
+}
+
+export interface ContentGap {
+  topic: string;
+  source: 'youtube_niche' | 'google_rising';
+  /** youtube_niche: how many hot niche videos share this topic, and their views */
+  video_count?: number;
+  total_views?: number;
+  example?: { video_id: string; title: string; channel_title: string; view_count: number };
+  /** google_rising: search growth in percent (Google shows ≥5000 as "Breakout") */
+  growth?: number;
+}
+
+/** ok · partial data with quota_cap / quota_exceeded / error explaining what is missing */
+export type YouTubeSourceStatus = 'ok' | 'quota_cap' | 'quota_exceeded' | 'error';
+export type GoogleTrendsStatus = 'ok' | 'no_data' | 'rate_limited' | 'unavailable';
+
 export interface TrendsData {
-  keyword_used: string;
   query: string;
-  keywords_in_data: string[];
+  range: string;
+  timeframe: string;
+  keyword_used: string;
+  /** The channel's main topics as search phrases */
   topic_keywords: string[];
+  google_trends_status: GoogleTrendsStatus;
+  google_trends_cached: boolean;
   rate_limited: boolean;
+  keywords_in_data: string[];
   interest_over_time: TrendsDataPoint[];
   related_queries: { top: RelatedQuery[]; rising: RelatedQuery[] };
-  geographic_interest: Record<string, number>;
+  geographic_interest: GeoInterest[];
+  youtube_trending: {
+    region: string;
+    category_id: string;
+    category_name: string;
+    videos: TrendVideo[];
+    status: YouTubeSourceStatus;
+  };
+  niche: {
+    window_days: number;
+    topics: { topic: string; videos: TrendVideo[] }[];
+    status: YouTubeSourceStatus;
+    resets_at: string | null;
+  };
+  content_gaps: ContentGap[];
   word_frequency: WordFrequencyItem[];
 }
 

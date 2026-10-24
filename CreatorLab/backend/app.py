@@ -6,6 +6,7 @@ import os
 import logging
 import secrets
 import threading
+from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -22,10 +23,11 @@ logging.basicConfig(
 logger = logging.getLogger("creatoriq.app")
 
 # ── local modules ──────────────────────────────────────────────────────────────
-from youtube_api import YouTubeAnalyzer, YouTubeAPIError
+from youtube_api import YouTubeAnalyzer, YouTubeAPIError, QuotaCapReached, CATEGORY_NAMES
 from reddit_api import RedditSentimentCollector
 from sentiment_analysis import SentimentAnalyzer
-from google_trends import GoogleTrendsAnalyzer, extract_topic_keywords, tag_word_frequency
+from google_trends import GoogleTrendsAnalyzer, extract_topic_phrases, tag_word_frequency, find_content_gaps
+import shared_store
 from news_scraper import NewsAnalyzer
 from ml_models import EngagementPredictor
 from instagram_api import InstagramAnalyzer
@@ -257,70 +259,136 @@ def reddit_sentiment():
 # ══════════════════════════════════════════════════════════════════════════════
 #  GOOGLE TRENDS
 # ══════════════════════════════════════════════════════════════════════════════
+# Dashboard date range → Google Trends timeframe
+_TRENDS_TIMEFRAMES = {"7D": "now 7-d", "30D": "today 1-m", "90D": "today 3-m", "1Y": "today 12-m"}
+
+# Daily budget (YouTube quota units) for the "hot in your niche" searches.
+# Each uncached search costs 101 of the project's 10,000 free daily units.
+NICHE_SEARCH_DAILY_UNIT_CAP = int(os.getenv("NICHE_SEARCH_DAILY_UNIT_CAP", "6000"))
+_NICHE_WINDOW_DAYS = 14
+
+
+def _google_trends_part(phrases: list[str], timeframe: str) -> dict:
+    try:
+        with _trends_lock:
+            return _trends().get_trends(phrases, timeframe=timeframe, gprop="youtube")
+    except Exception:
+        logger.exception("google trends part failed")
+        return {"status": "unavailable", "interest_over_time": [], "keywords_in_data": [],
+                "related": {"top": [], "rising": []}, "geo": [], "cached": False}
+
+
+def _trending_part(videos: list[dict], channel_info: dict) -> dict:
+    """What is trending on YouTube in the channel's main category and country."""
+    region = (channel_info.get("country") or "US").upper()
+    categories = [v.get("category_id") for v in videos if v.get("category_id")]
+    category = max(set(categories), key=categories.count) if categories else ""
+    try:
+        res = _yt().get_trending_videos(region, category, max_results=10)
+        cat = res.get("category_id", "")
+        return {**res, "category_name": CATEGORY_NAMES.get(cat, ""), "status": "ok"}
+    except YouTubeAPIError as exc:
+        logger.warning("trending part failed: %s", exc)
+        return {"region": region, "category_id": "", "category_name": "", "videos": [],
+                "status": "quota_exceeded" if exc.status == 429 else "error"}
+    except Exception:
+        logger.exception("trending part failed")
+        return {"region": region, "category_id": "", "category_name": "", "videos": [], "status": "error"}
+
+
+def _niche_part(phrases: list[str], channel_id: str) -> dict:
+    """Most-viewed recent videos from other channels for each of the channel's topics."""
+    topics, status = [], "ok"
+    for phrase in phrases:
+        try:
+            found = _yt().search_recent_videos(
+                phrase, days=_NICHE_WINDOW_DAYS, max_results=8, daily_cap=NICHE_SEARCH_DAILY_UNIT_CAP
+            )
+        except QuotaCapReached:
+            status = "quota_cap"
+            break
+        except YouTubeAPIError as exc:
+            logger.warning("niche search failed for %r: %s", phrase, exc)
+            status = "quota_exceeded" if exc.status == 429 else "error"
+            if exc.status == 429:
+                break
+            continue
+        except Exception:
+            logger.exception("niche search failed for %r", phrase)
+            status = "error"
+            continue
+        others = [v for v in found if v.get("channel_id") != channel_id][:5]
+        topics.append({"topic": phrase, "videos": others})
+    return {
+        "window_days": _NICHE_WINDOW_DAYS,
+        "topics":      topics,
+        # Partial results are still shown; the status explains what is missing
+        "status":      status,
+        "resets_at":   shared_store.quota_resets_at() if status in ("quota_cap", "quota_exceeded") else None,
+    }
+
+
 @app.route("/api/trends", methods=["GET"])
 def google_trends():
     """
-    GET /api/trends?query=<channel_name>&channel_id=<id>&timeframe=<tf>
+    GET /api/trends?channel_id=<id>&query=<channel_name>&range=<7D|30D|90D|1Y>
 
-    Strategy:
-    - If channel_id is given, extract the most frequent tags from recent videos
-      and query Google Trends for those topics (far more useful than the channel name).
-    - Otherwise fall back to the raw query string.
-    - Runs all 3 pytrends calls in one payload to reduce round-trips.
+    - Topics: the channel's main tag phrases ("python tutorial"), ranked by use and views
+    - Google Trends (YouTube search interest) for those phrases — cached, may be rate limited
+    - Trending on YouTube in the channel's category and country
+    - Hot in the niche: most-viewed videos of the last two weeks per topic (daily capped)
+    - Content gaps: niche/rising topics the channel has not covered yet
     """
     query      = request.args.get("query", "").strip()
     channel_id = request.args.get("channel_id", "").strip()
-    timeframe  = request.args.get("timeframe", "today 3-m")
+    range_key  = request.args.get("range", "90D").strip().upper()
+    timeframe  = _TRENDS_TIMEFRAMES.get(range_key, "today 3-m")
 
     if not query and not channel_id:
         return error_response("Provide 'query' or 'channel_id'.")
 
-    # ── Step 1: decide which keyword to search ──────────────────────────────
-    keyword_used  = query or "youtube"
-    topic_keywords: list[str] = []
     videos: list[dict] = []
-
+    channel_info: dict = {}
     if channel_id:
         try:
-            videos = _yt().get_channel_videos(channel_id, max_results=20)
-            topic_keywords = extract_topic_keywords(videos)
-            if topic_keywords:
-                keyword_used = topic_keywords[0]
-                logger.info("Trends keywords from video content: %s", topic_keywords)
+            videos = _yt().get_channel_videos(channel_id, max_results=50)
+            channel_info = _yt().get_channel_info(channel_id) or {}
         except Exception as exc:
-            logger.warning("Tag extraction failed: %s — falling back to query.", exc)
+            return server_error(exc, "google_trends")
 
-    if not topic_keywords:
-        topic_keywords = [keyword_used]
+    phrases = extract_topic_phrases(videos, channel_info.get("title") or query) or ([query] if query else [])
 
-    # ── Step 2: query pytrends ──────────────────────────────────────────────
     try:
-        gt = _trends()
-        with _trends_lock:
-            interest, kws_in_data, rl1 = gt.get_interest_over_time(topic_keywords, timeframe=timeframe)
-            related,  rl2 = gt.get_related_queries(keyword_used)
-            geo,      rl3 = gt.get_geographic_interest(keyword_used)
-        rate_limited  = rl1 or rl2 or rl3
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            f_gt = pool.submit(_google_trends_part, phrases, timeframe)
+            f_trending = pool.submit(_trending_part, videos, channel_info)
+            f_niche = pool.submit(_niche_part, phrases, channel_id)
+            gt, trending, niche = f_gt.result(), f_trending.result(), f_niche.result()
 
-        return ok_response(
-            {
-                "query":               query,
-                "keyword_used":        keyword_used,
-                "topic_keywords":      topic_keywords,
-                "keywords_in_data":    kws_in_data,
-                "timeframe":           timeframe,
-                "interest_over_time":  interest,
-                "related_queries":     related,
-                "geographic_interest": geo,
-                "rate_limited":        rate_limited,
-                # Word frequency from video tags for channel topic profile
-                "word_frequency":      tag_word_frequency(videos),
-            }
-        )
+        gaps = find_content_gaps(videos, niche["topics"], gt["related"]["rising"])
+
+        return ok_response({
+            "query":                query,
+            "range":                range_key if range_key in _TRENDS_TIMEFRAMES else "90D",
+            "timeframe":            timeframe,
+            "topic_keywords":       phrases,
+            "keyword_used":         phrases[0] if phrases else "",
+            # Google Trends (YouTube search interest)
+            "google_trends_status": gt["status"],
+            "google_trends_cached": gt["cached"],
+            "rate_limited":         gt["status"] == "rate_limited",
+            "keywords_in_data":     gt["keywords_in_data"],
+            "interest_over_time":   gt["interest_over_time"],
+            "related_queries":      gt["related"],
+            "geographic_interest":  gt["geo"],
+            # YouTube-native signals
+            "youtube_trending":     trending,
+            "niche":                niche,
+            "content_gaps":         gaps,
+            "word_frequency":       tag_word_frequency(videos),
+        })
     except Exception as exc:
         return server_error(exc, "google_trends")
-
-
 
 
 # ══════════════════════════════════════════════════════════════════════════════
