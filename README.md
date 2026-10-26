@@ -5,7 +5,7 @@
 </a>
 
 <a href="https://creator-iq-gules.vercel.app/">
-  <img src="https://readme-typing-svg.demolab.com/?font=Fira+Code&weight=600&size=22&pause=900&color=FF006E&center=true&vCenter=true&width=720&lines=Your+channel+data%2C+decoded.;12-week+ML+growth+forecasts.;Sentiment+from+YouTube%2C+Reddit+%26+News.;Lock+on+to+3+competitors.;Free.+Open+source.+No+signup." alt="Typing animation: Your channel data, decoded"/>
+  <img src="https://readme-typing-svg.demolab.com/?font=Fira+Code&weight=600&size=22&pause=900&color=FF006E&center=true&vCenter=true&width=720&lines=Your+channel+data%2C+decoded.;What+actually+works+on+your+channel.;Content+gaps+in+your+niche.;Sentiment+from+YouTube%2C+Reddit+%26+News.;Free.+Open+source.+No+signup." alt="Typing animation: Your channel data, decoded"/>
 </a>
 
 <br/>
@@ -27,7 +27,7 @@
   <tr>
     <td align="center" width="140"><h3>7</h3><sub>MODULES</sub></td>
     <td align="center" width="140"><h3>4</h3><sub>DATA SOURCES</sub></td>
-    <td align="center" width="140"><h3>12 wk</h3><sub>FORECAST</sub></td>
+    <td align="center" width="140"><h3>150</h3><sub>VIDEOS ANALYZED</sub></td>
     <td align="center" width="140"><h3>3</h3><sub>RIVALS TRACKED</sub></td>
     <td align="center" width="140"><h3>$0</h3><sub>FOREVER</sub></td>
   </tr>
@@ -36,7 +36,7 @@
 **CreatorIQ** ✔︎ &nbsp;·&nbsp; `@creatoriq`
 
 YouTube Studio gives you views. **CreatorIQ gives you intelligence.**<br/>
-ML growth predictions · multi-source sentiment · competitor tracking · Google Trends<br/>
+Performance insights · content gaps · multi-source sentiment · competitor tracking<br/>
 🔗 [creator-iq-gules.vercel.app](https://creator-iq-gules.vercel.app/) &nbsp;·&nbsp; 📍 Vercel + Render &nbsp;·&nbsp; 🛠️ built by [@harshgupta257](https://github.com/harshgupta257)
 
 [**⭐ Follow (star)**](https://github.com/harshgupta257/CreatorIq/stargazers) &nbsp;·&nbsp; [**🍴 Remix (fork)**](https://github.com/harshgupta257/CreatorIq/fork) &nbsp;·&nbsp; [**💬 Message (issues)**](https://github.com/harshgupta257/CreatorIq/issues)
@@ -78,12 +78,12 @@ ML growth predictions · multi-source sentiment · competitor tracking · Google
 
 | 😴 What YouTube Studio gives you | ⚡ What CreatorIQ gives you |
 |---|---|
-| Total views & watch time | ML-predicted growth trajectory (12 weeks) |
+| Total views & watch time | Every video scored against your typical video of the same age |
 | Basic subscriber count | Competitor health scores & gap analysis |
 | Simple engagement rate | Multi-source sentiment (YouTube + Reddit + News) |
-| Upload history | Optimal upload day/hour heatmap |
+| Upload history | What works on your channel, with significance tests, not guesses |
 | Nothing about competition | Content gap analysis vs 3 competitors |
-| No external signal | Google Trends integration for topic demand |
+| No external signal | Content gaps: topics hot in your niche you haven't covered |
 
 <sub>❤️ like it? &nbsp;[⭐ star](https://github.com/harshgupta257/CreatorIq/stargazers) &nbsp;·&nbsp; 🔁 [share the live app](https://creator-iq-gules.vercel.app/) &nbsp;·&nbsp; 💬 [reply in issues](https://github.com/harshgupta257/CreatorIq/issues)</sub>
 
@@ -105,8 +105,8 @@ ML growth predictions · multi-source sentiment · competitor tracking · Google
 - **Performance trend chart**: full-width area chart of your last 30 videos' views
 - **Audience sentiment snapshot**: Positive / Neutral / Negative from the combined multi-source analysis
 - **Top videos**: horizontal bar chart of your top 6 videos by views
-- **Data source status**: live indicators for YouTube, Reddit, Trends, News and Instagram
-- **Intelligence insights**: auto-generated from the ML model (viral score, best day, top topic)
+- **Data source status**: shows what each source actually returned (live, rate limited, no data, not configured)
+- **Intelligence insights**: expected views for your next video, momentum, and the clearest "what works" findings
 
 <sub>❤️ the home screen &nbsp;·&nbsp; 📍 <code>/dashboard</code></sub>
 </details>
@@ -126,19 +126,19 @@ ML growth predictions · multi-source sentiment · competitor tracking · Google
 </details>
 
 <details>
-<summary><b>@creatoriq</b> posted &nbsp;🧠 <b>ML Growth Predictions</b> &nbsp;<code>#machinelearning</code> <code>#forecast</code> &nbsp;⭐ <i>hero screen</i></summary>
+<summary><b>@creatoriq</b> posted &nbsp;🧠 <b>Performance Insights</b> &nbsp;<code>#machinelearning</code> <code>#statistics</code> &nbsp;⭐ <i>hero screen</i></summary>
 <br/>
 
-- **Model status bar**: shows whether the Random Forest is trained or running in heuristic mode, with R² accuracy
-- **Forecast summary**: projected weekly views, viral potential score, best upload day, optimal duration
-- **Growth trajectory**: historical (solid) + 12-week forecast (dashed) in one chart
-- **Title intelligence**: boost % from numbers, question marks and colons in titles; power words; best example
-- **Topic performance**: which content topics get the most average views
-- **Upload time optimizer**: 7×6 day × time-slot heatmap with the best cell highlighted
-- **Video predictions table**: actual vs predicted views, delta, confidence bar
-- **Content recommendations**: proven and trending topics, with reasoning
+Every number here compares a video with **your typical video of the same age and format** (e.g. "2.3× typical"), because older videos have simply had more time to collect views.
 
-<sub>🤖 Random Forest + Gradient Boosting (scikit-learn) &nbsp;·&nbsp; 📍 <code>/dashboard/predictions</code></sub>
+- **Expected views for your next video**: a likely range after 30 days, separately for long-form and Shorts, from your recent form
+- **Momentum**: are your recent videos doing better or worse than earlier ones? Only called "improving" or "declining" when the change is statistically clear
+- **Top and under-performers**: plus what your best videos have in common (topic, format, length, title style)
+- **What works on your channel**: format, length, title style, upload day and time (in your time zone) and topics. Each is shown with medians, video counts and a verdict: *clear effect*, *no clear difference* or *not enough data*
+- **What drives views (ML)**: a gradient-boosting model tested on videos it hasn't seen. Its drivers are shown only when it beats a simple "typical video" guess; otherwise the page says so
+- **Channel growth**: a real subscriber and views chart from daily snapshots (YouTube's API has no history, so it builds up from your first analysis)
+
+<sub>🤖 scikit-learn + SciPy &nbsp;·&nbsp; Huber regression, Mann–Whitney / Kruskal–Wallis tests with Benjamini–Hochberg correction, 5-fold cross-validation &nbsp;·&nbsp; 📍 <code>/dashboard/insights</code></sub>
 </details>
 
 <details>
@@ -155,13 +155,16 @@ ML growth predictions · multi-source sentiment · competitor tracking · Google
 </details>
 
 <details>
-<summary><b>@creatoriq</b> posted &nbsp;📈 <b>Google Trends</b> &nbsp;<code>#trending</code> <code>#topics</code></summary>
+<summary><b>@creatoriq</b> posted &nbsp;📈 <b>Market Trends</b> &nbsp;<code>#trending</code> <code>#contentgaps</code></summary>
 <br/>
 
-- **Status bar**: tracked keywords, rate-limit state and a direct link to Google Trends
-- **Interest over time**: multi-line chart, one line per keyword
-- **Related queries**: Top and Rising queries with relative value bars
-- **Geographic interest**: ranked country list with relative bars
+- **Your topics**: your channel's main tag phrases ("python tutorial", not just "tutorial")
+- **Content opportunities**: topics several hot videos in your niche share, plus rising searches, that you haven't covered yet
+- **Hot in your niche**: most-viewed videos from other channels in the last 14 days, per topic
+- **Trending on YouTube**: what's trending in your channel's category and country
+- **YouTube search interest**: Google Trends for YouTube searches, with related rising/top searches and countries (real flags)
+- **Date range**: the 7D / 30D / 90D / 1Y buttons change the timeframe
+- **Honest states**: every section says when it's rate limited, capped or unavailable instead of showing an empty box
 
 <sub>📍 <code>/dashboard/trends</code></sub>
 </details>
@@ -210,14 +213,16 @@ flowchart LR
     API --> RD[("👽 Reddit<br/>PRAW")]
     API --> GT[("📈 Google Trends<br/>pytrends")]
     API --> NW[("📰 News<br/>RSS")]
+    API <--> DB[("🗄️ Postgres<br/>daily snapshots")]
     YT & RD & NW --> NLP{{"💬 VADER + TextBlob"}}
-    YT --> ML{{"🧠 Random Forest +<br/>Gradient Boosting"}}
-    NLP & ML & GT --> FE
+    YT --> ML{{"🧠 Age-adjusted stats +<br/>validated ML"}}
+    YT & GT --> TR{{"📈 Trends +<br/>content gaps"}}
+    NLP & ML & TR & DB --> FE
 ```
 
-**2/3** Comments from YouTube, Reddit and the news are scored for sentiment, while your upload history trains the growth model.
+**2/3** Comments from YouTube, Reddit and the news are scored for sentiment. Your upload history is scored against your own typical video of the same age, tested for what really makes a difference, and fed to an ML model that has to prove itself on unseen videos before it's shown.
 
-**3/3** Everything comes back to one dashboard: forecasts, sentiment, trends and competitor intel. No account needed. 🫡
+**3/3** Everything comes back to one dashboard: performance insights, content gaps, sentiment and competitor intel. No account needed. 🫡
 
 <details>
 <summary>🗂️ <b>Peek at the folder structure</b></summary>
@@ -225,16 +230,21 @@ flowchart LR
 
 ```
 CreatorIQ
-├── .github/assets/                # README banner, divider, footer (animated SVG)
+├── .github/
+│   ├── assets/                    # README banner, divider, footer (animated SVG)
+│   └── workflows/daily-snapshots.yml  # optional daily growth snapshots
 ├── CreatorLab/                    # Backend + legacy frontend
 │   ├── backend/
 │   │   ├── app.py                 # Flask API server (all endpoints)
 │   │   ├── youtube_api.py         # YouTube Data API v3 wrapper
 │   │   ├── reddit_api.py          # PRAW Reddit wrapper
 │   │   ├── sentiment_analysis.py  # VADER + TextBlob multi-source
-│   │   ├── google_trends.py       # pytrends wrapper
+│   │   ├── google_trends.py       # Google Trends, topic phrases, content gaps
 │   │   ├── news_scraper.py        # News RSS sentiment
-│   │   ├── ml_models.py           # Random Forest + Gradient Boosting predictor
+│   │   ├── performance.py         # Performance Insights: age-adjusted stats + validated ML
+│   │   ├── snapshots.py           # Daily channel snapshots (Postgres or SQLite)
+│   │   ├── shared_store.py        # Shared cache + daily quota counter
+│   │   ├── ml_models.py           # Legacy /api/predictions (old static dashboard only)
 │   │   ├── instagram_api.py       # Instagram Graph API (WIP)
 │   │   └── requirements.txt
 │   ├── dashboard.html             # Legacy vanilla dashboard
@@ -251,21 +261,21 @@ CreatorIQ
     │       ├── page.tsx           # Overview
     │       ├── youtube/           # YouTube analytics
     │       ├── sentiment/         # Multi-source sentiment
-    │       ├── predictions/       # ML predictions
-    │       ├── trends/            # Google Trends
+    │       ├── insights/          # Performance Insights
+    │       ├── trends/            # Market trends + content gaps
     │       ├── competitor/        # Competitor intelligence
     │       ├── instagram/         # Coming soon
     │       └── settings/          # Settings
     ├── components/
     │   ├── shell/                 # Sidebar, Header
-    │   ├── ui/                    # Button, Badge, DataTable, MetricStrip, TabBar, Input, Panel, Skeleton, SectionHeader
+    │   ├── ui/                    # Button, Badge, DataTable, ErrorState, MetricStrip, TabBar, Input, Panel, Skeleton, SectionHeader
     │   ├── dashboard/             # OverviewCharts
-    │   ├── predictions/           # ForecastChart, TopicBar, HeatmapGrid, VideoTable
     │   └── legal/                 # LegalPage
     └── lib/
         ├── api.ts                 # Typed Flask API client
         ├── store.ts               # Zustand global state (persisted)
         ├── types.ts               # TypeScript interfaces
+        ├── useChannelData.ts      # Per-channel data loading with errors + retry
         └── utils.ts               # formatNumber, formatDate, calcEngagementRate, …
 ```
 
@@ -296,7 +306,7 @@ CreatorIQ
 |---|---|---|
 | YouTube Data API v3 | [console.cloud.google.com](https://console.cloud.google.com) | ✅ Yes |
 | Reddit API (PRAW) | [reddit.com/prefs/apps](https://www.reddit.com/prefs/apps) | Optional |
-| News API | [newsapi.org](https://newsapi.org) | Optional |
+| Postgres database | e.g. [neon.tech](https://neon.tech) (free) | Optional, keeps growth history |
 
 </details>
 
@@ -314,15 +324,34 @@ cd CreatorLab/backend
 pip install -r requirements.txt
 ```
 
-Create a `.env` file:
+Create a `.env` file (see [`.env.example`](CreatorLab/backend/.env.example) for every option):
 
 ```env
 YOUTUBE_API_KEY=AIza...
+# Optional
 REDDIT_CLIENT_ID=your_client_id
 REDDIT_CLIENT_SECRET=your_client_secret
 REDDIT_USER_AGENT=CreatorIQ/1.0 by u/youruser
-NEWS_API_KEY=your_news_api_key
 ```
+
+News uses Google News RSS, so it needs no key.
+
+<details>
+<summary><b>⚙️ More settings (for deploying)</b></summary>
+<br/>
+
+| Variable | What it does |
+|---|---|
+| `ALLOWED_ORIGINS` | Comma-separated frontend URLs allowed to call the API (defaults cover localhost and the live app) |
+| `SECRET_KEY` | Flask secret; a random one is generated if unset |
+| `FLASK_DEBUG` | `false` by default. Never enable it on a public server |
+| `NICHE_SEARCH_DAILY_UNIT_CAP` | YouTube quota units per day the "Hot in your niche" searches may use (default `6000` of the free `10000`) |
+| `DATABASE_URL` | Postgres for daily growth snapshots. Needed on hosts that wipe local files (e.g. Render's free tier) |
+| `SNAPSHOT_REFRESH_TOKEN` | Enables `POST /api/snapshots/refresh` for the optional daily GitHub Action |
+
+To record a snapshot every day even when nobody opens the app, also add the repository secrets `SNAPSHOT_REFRESH_TOKEN` and `CREATORIQ_API_URL`. The workflow in `.github/workflows/daily-snapshots.yml` does nothing until they exist.
+
+</details>
 
 ```bash
 python app.py
@@ -364,12 +393,14 @@ Open **http://localhost:3000**, enter a channel handle (e.g. `@mkbhd`) and hit *
 | `GET` | `/api/youtube/videos?channel_id=` | Video list with stats |
 | `GET` | `/api/youtube/comments?video_id=` | Top comments for a video |
 | `GET` | `/api/sentiment/analyze?channel_id=&channel_name=` | Multi-source sentiment analysis |
-| `GET` | `/api/predictions?channel_id=` | ML predictions (growth forecast, viral score, …) |
-| `GET` | `/api/trends?query=&channel_id=` | Google Trends data |
+| `GET` | `/api/insights?channel_id=&tz=` | Performance Insights + growth history |
+| `GET` | `/api/trends?query=&channel_id=&range=` | Topics, content gaps, niche + trending videos, Google Trends |
 | `GET` | `/api/reddit/sentiment?query=` | Reddit-only sentiment |
 | `GET` | `/api/news?query=` | News sentiment |
 | `POST` | `/api/instagram/connect` | Instagram connect (WIP) |
 | `GET` | `/api/instagram/insights` | Instagram insights (WIP) |
+| `POST` | `/api/snapshots/refresh` | Daily snapshot refresh (needs `X-Refresh-Token`) |
+| `GET` | `/api/predictions?channel_id=` | Legacy: used only by the old static dashboard |
 
 Try it live: **[`/api/health`](https://creatoriq-backend-986h.onrender.com/api/health)**
 
@@ -444,15 +475,17 @@ Try it live: **[`/api/health`](https://creatoriq-backend-986h.onrender.com/api/h
 | Package | Purpose |
 |---|---|
 | `flask` + `flask-cors` | API server |
-| `google-api-python-client` | YouTube Data API v3 |
+| `requests` | YouTube Data API v3, News RSS |
 | `praw` | Reddit API |
 | `pytrends` | Google Trends (unofficial) |
 | `vaderSentiment` | Sentiment analysis (primary) |
 | `textblob` | Sentiment analysis (secondary) |
-| `scikit-learn` | Random Forest + Gradient Boosting models |
+| `scikit-learn` / `scipy` | Robust regression, significance tests, gradient boosting with cross-validation |
 | `numpy` / `pandas` | Data processing |
-| `requests` | HTTP requests |
+| `psycopg` | Postgres for growth snapshots |
+| `tzdata` | Time zones (YouTube quota resets at Pacific midnight) |
 | `python-dotenv` | Environment variables |
+| `gunicorn` | Production server |
 
 </details>
 
@@ -468,15 +501,16 @@ Try it live: **[`/api/health`](https://creatoriq-backend-986h.onrender.com/api/h
 |:---:|---|
 | ✅ | YouTube analytics deep-dive |
 | ✅ | Multi-source sentiment (YouTube + Reddit + News) |
-| ✅ | ML growth predictions (Random Forest + Gradient Boosting) |
-| ✅ | Google Trends integration |
+| ✅ | Performance Insights: age-adjusted stats + validated ML model |
+| ✅ | Trends: content gaps, hot in your niche, trending in your category |
+| ✅ | Daily growth snapshots (Postgres) |
 | ✅ | Competitor intelligence console |
 | ✅ | Retro-futurism redesign (landing + dashboard) |
 | 🕒 | Instagram Graph API integration |
 | 🕒 | TikTok analytics |
 | 🕒 | Email digest / weekly reports |
 | 🕒 | OAuth login (connect your YouTube account) |
-| 🕒 | Historical data persistence (SQLite/Postgres) |
+| 🕒 | Automated test suite |
 
 <sub>Want something on this list? [Request it](https://github.com/harshgupta257/CreatorIq/issues).</sub>
 
