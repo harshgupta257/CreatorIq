@@ -121,7 +121,7 @@
     <circle cx="18" cy="14" r="5" fill="#fff" class="pulse"/>
     <text x="31" y="19" class="mono" font-size="14" font-weight="700" fill="#fff">LIVE</text>
   </g>
-  <text x="314" y="218" class="mono" font-size="15" fill="#c0c0c0">forecasts · sentiment · rivals · trends</text>
+  <text x="314" y="218" class="mono" font-size="15" fill="#c0c0c0">insights · sentiment · rivals · trends</text>
 
   <!-- source chips -->
   <g class="mono" font-size="13" font-weight="700">
@@ -144,8 +144,8 @@
     <g>
       <animateTransform attributeName="transform" type="translate" values="1010 300;1010 290;1010 300" dur="5s" repeatCount="indefinite"/>
       <rect width="160" height="58" fill="#05050c" fill-opacity="0.85" stroke="#00ffff" stroke-opacity="0.6"/>
-      <text x="12" y="20" font-size="10" fill="#6a6aa8" letter-spacing="2">FORECAST</text>
-      <text x="12" y="44" font-size="20" font-weight="700" fill="#00ffff" filter="url(#glow)">12 WEEKS</text>
+      <text x="12" y="20" font-size="10" fill="#6a6aa8" letter-spacing="2">VIDEOS ANALYZED</text>
+      <text x="12" y="44" font-size="20" font-weight="700" fill="#00ffff" filter="url(#glow)">UP TO 150</text>
     </g>
     <g>
       <animateTransform attributeName="transform" type="translate" values="40 300;40 310;40 300" dur="6s" repeatCount="indefinite"/>
